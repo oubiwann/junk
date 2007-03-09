@@ -18,10 +18,8 @@ class SiteRoot(rend.Page):
     def locateChild(self, context, segments):
         path = '/'.join(('',) + segments)
         for regex, resource in urlPatterns:
-            print regex, path
             match = re.match(regex, path)
             if match:
-                print match.groups()
                 newPath = match.groups()[0]
                 r = resource()
                 if newPath in ['', '/']:
