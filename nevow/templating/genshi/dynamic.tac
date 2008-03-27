@@ -14,6 +14,20 @@ rendPageAttrs = [x[0] for x in getmembers(rend.Page)]
 class genshistr(xmlstr):
 
     def load(self, ctx=None, preprocessors=()):
+        """
+        Changes made to this 'dynamic' example (i.e., how it differs from the
+        orginal, simple example):
+         * the Python 'inspect' module is used to check for the methods and
+           attributes of the renderer
+         * any methods/attributes that are Nevow-specific are skipped
+         * any callables are called
+         * the origial template -- in its pre-parse form -- is preserved
+         * Nevow template caching is disabled
+
+        The method used below allows for the use of both Genshi and Nevow
+        syntax in the template(s). If you will only be using Genshi, you can
+        enable your own caching mechanism and not up-call to the parent class.
+        """
         data = {}
         renderer = inevow.IRenderer(ctx)
         for attr, val in getmembers(renderer):
@@ -30,13 +44,18 @@ class genshistr(xmlstr):
             if callable(obj):
                 val = obj()
             data[attr] = val
+        # save a copy of the original, unmolested template, complete with
+        # Genshi markup
         orig = self.template
         tmpl = MarkupTemplate(self.template)
         xmlStr = tmpl.generate(**data).render('xhtml')
         self.template = xmlStr
         nevowRun = super(genshistr, self).load(ctx=ctx,
             preprocessors=preprocessors)
+        # null out Nevow's caching of the template
         self._cache = None
+        # revert to the unparsed Genshi template so that genshi attrs/methods
+        # have the chance to generate fresh data
         self.template = orig
         return nevowRun
 
