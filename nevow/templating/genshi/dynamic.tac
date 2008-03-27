@@ -1,5 +1,5 @@
-
-from genshi.template import MarkupTemplate
+from inspect import getmembers
+from datetime import datetime
 
 from nevow import rend
 from nevow import page
@@ -7,15 +7,38 @@ from nevow import inevow
 from nevow import loaders
 from nevow.loaders import xmlstr
 
+from genshi.template import MarkupTemplate
+
+rendPageAttrs = [x[0] for x in getmembers(rend.Page)]
+
 class genshistr(xmlstr):
 
     def load(self, ctx=None, preprocessors=()):
-        attrs = inevow.IRenderer(ctx).__dict__
+        data = {}
+        renderer = inevow.IRenderer(ctx)
+        for attr, val in getmembers(renderer):
+            # skip non-public methods
+            if attr.startswith('_'): continue
+            # skip custom Nevow methods
+            if attr.startswith('child_'): continue
+            if attr.startswith('render_'): continue
+            if attr.startswith('data_'): continue
+            # skip nevow.rend.Page methods
+            if attr in rendPageAttrs:
+                continue
+            obj = getattr(renderer, attr)
+            if callable(obj):
+                val = obj()
+            data[attr] = val
+        orig = self.template
         tmpl = MarkupTemplate(self.template)
-        xmlStr = tmpl.generate(**attrs).render('xhtml')
+        xmlStr = tmpl.generate(**data).render('xhtml')
         self.template = xmlStr
-        return  super(genshistr, self).load(ctx=ctx,
+        nevowRun = super(genshistr, self).load(ctx=ctx,
             preprocessors=preprocessors)
+        self._cache = None
+        self.template = orig
+        return nevowRun
 
 class MyStuffResource(rend.Page):
     addSlash = True
@@ -57,19 +80,29 @@ class GenshiStuffResource(YourStuffResource):
         <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
             xmlns:nevow="http://nevow.com/ns/nevow/0.1"
             xmlns:genshi="http://genshi.edgewall.org/">
-            <h1>Your Stuff</h1>
-            <p>You are <span nevow:render="username"/> and your stuff is here.</p>
+            <h1>Genshi Test</h1>
             <ul>
             <li><a href="/">Home</a></li>
             </ul>
-            <h1>Genshi Test</h1>
+            <div>
+              <span>Nevow thinks you are <span nevow:render="username"/></span>
+            </div>
+            <div>
+              <span>Genshi thinks you are ${username}</span>
+            </div>
             <div>
               <span genshi:with="y=7; x=y**2; z=x+10">$x $y $z</span>
             </div>
             <div>
-                <span>Your name is ${username}</span>
+              <span>Timestamp is ${date}</span>
             </div>
         </html>''')
+    def __init__(self, *args, **kwds):
+        super(GenshiStuffResource, self).__init__(*args, **kwds)
+
+    def date(self):
+        return datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+    date = property(date)
 
 class SiteRoot(rend.Page):
     addSlash = True
