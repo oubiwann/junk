@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from nevow import rend
 from nevow import loaders
 
@@ -30,6 +32,10 @@ class GenshiStuffResource(YourStuffResource):
         evenOdd = ['odd', 'even']
         self.altItems = [ (x, {'class': evenOdd[x % 2]})
             for x in list(xrange(10))]
+
+    def date(self):
+        return datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+    date = property(date)
 
     def render_username(self, context, data):
         return self.username
