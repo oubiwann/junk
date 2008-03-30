@@ -1,15 +1,10 @@
-import os
 from inspect import getmembers
-from cStringIO import StringIO
 
-from nevow import flat
 from nevow import rend
 from nevow import inevow
 from nevow.loaders import xmlstr
-from nevow.loaders import xmlfile
 
 from genshi.template import MarkupTemplate
-from genshi.template import TemplateLoader
 
 rendPageAttrs = [x[0] for x in getmembers(rend.Page)]
 
