@@ -17,8 +17,8 @@ def pushText(chan, body):
     msg = Content(body)
     msg["delivery mode"] = 2
     yield chan.basic_publish(
-        exchange="sorting_room", content=msg,
-        routing_key="jason")
+        exchange=common.EXCHANGE_NAME, content=msg,
+        routing_key=common.ROUTING_KEY)
     returnValue(None)
 
 

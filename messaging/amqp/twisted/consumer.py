@@ -17,24 +17,24 @@ def getQueue(conn, chan):
     #
     # create an exchange on the message server
     yield chan.exchange_declare(
-        exchange="sorting_room", type="direct",
+        exchange=common.EXCHANGE_NAME, type="direct",
         durable=True, auto_delete=False)
     # create a message queue on the message server
     yield chan.queue_declare(
-        queue="po_box", durable=True, exclusive=False,
+        queue=common.QUEUE_NAME, durable=True, exclusive=False,
         auto_delete=False)
     # bind the exchange and the message queue
     yield chan.queue_bind(
-        queue="po_box", exchange="sorting_room",
-        routing_key="jason")
+        queue=common.QUEUE_NAME, exchange=common.EXCHANGE_NAME,
+        routing_key=common.ROUTING_KEY)
     # we're writing a consumer, so we need to create a consumer, identifying
     # which queue this consumer is reading from; we give it a tag so that we
     # can refer to it later
     yield chan.basic_consume(
-        queue='po_box', no_ack=True,
-        consumer_tag="testtag")
+        queue=common.QUEUE_NAME,
+        consumer_tag=common.CONSUMER_TAG)
     # get the queue that's associated with our consumer
-    queue = yield conn.queue("testtag")
+    queue = yield conn.queue(common.CONSUMER_TAG)
     returnValue(queue)
 
 
