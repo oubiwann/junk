@@ -13,6 +13,8 @@ import common
 
 @inlineCallbacks
 def getQueue(conn, chan):
+    # in order to get the queue, we've got some setup to do...
+    #
     # create an exchange on the message server
     yield chan.exchange_declare(
         exchange="sorting_room", type="direct",
@@ -25,10 +27,13 @@ def getQueue(conn, chan):
     yield chan.queue_bind(
         queue="po_box", exchange="sorting_room",
         routing_key="jason")
-    #XXX ? read the spec for basic_consume
+    # we're writing a consumer, so we need to create a consumer, identifying
+    # which queue this consumer is reading from; we give it a tag so that we
+    # can refer to it later
     yield chan.basic_consume(
         queue='po_box', no_ack=True,
         consumer_tag="testtag")
+    # get the queue that's associated with our consumer
     queue = yield conn.queue("testtag")
     returnValue(queue)
 
