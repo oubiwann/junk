@@ -1,0 +1,6 @@
+The code for this example was inspired by the example written by Esteve
+Fernandez as part of a comment on an AMQP blog post:
+  http://blogs.digitar.com/jjww/2009/01/rabbits-and-warrens/#comment-681
+
+These examples were then worked into a different blog post by Dan Reverri:
+  http://app.arat.us/blog/?p=38
