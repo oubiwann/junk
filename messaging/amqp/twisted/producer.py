@@ -15,7 +15,7 @@ import common
 @inlineCallbacks
 def pushText(chan, body):
     msg = Content(body)
-    msg["delivery mode"] = 2
+    msg["delivery mode"] = common.PERSISTENT
     yield chan.basic_publish(
         exchange=common.EXCHANGE_NAME, content=msg,
         routing_key=common.ROUTING_KEY)
