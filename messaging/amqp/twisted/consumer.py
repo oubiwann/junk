@@ -54,7 +54,7 @@ def main(spec):
     # create the Twisted consumer client
     consumer = ClientCreator(
         reactor, AMQClient, delegate=delegate,
-        vhost="/", spec=spec)
+        vhost=common.VHOST, spec=spec)
     # connect to the RabbitMQ server
     conn = yield common.getConnection(consumer)
     # get the channel

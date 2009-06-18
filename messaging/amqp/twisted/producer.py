@@ -18,6 +18,8 @@ def pushText(chan, body):
     # we don't want to see these test messages every time the consumer connects
     # to the RabbitMQ server, so we opt for non-persistent delivery
     msg["delivery mode"] = common.NON_PERSISTENT
+    # publiish the message to our exchange; use the routing key to decide which
+    # queue the exchange should send it to
     yield chan.basic_publish(
         exchange=common.EXCHANGE_NAME, content=msg,
         routing_key=common.ROUTING_KEY)
@@ -27,7 +29,11 @@ def pushText(chan, body):
 @inlineCallbacks
 def cleanUp(conn, chan):
     yield chan.channel_close()
+    # the AMQP spec says that connection/channel closes should be done
+    # carefully; the txamqp.protocol.AMQPClient creates an initial channel with
+    # id 0 when it first starts; we get this channel so that we can close it
     chan = yield conn.channel(0)
+    # close the virtual connection (channel)
     yield chan.connection_close()
     reactor.stop()
     returnValue(None)
@@ -39,7 +45,7 @@ def main(spec):
     # create the Twisted producer client
     producer = ClientCreator(
         reactor, AMQClient, delegate=delegate,
-        vhost="/", spec=spec)
+        vhost=common.VHOST, spec=spec)
     # connect to the RabbitMQ server
     conn = yield common.getConnection(producer)
     # get the channel

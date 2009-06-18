@@ -4,6 +4,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 RABBIT_MQ_HOST = "localhost"
 RABBIT_MQ_PORT = 5672
 
+VHOST = "/"
 EXCHANGE_NAME = "test_message_exchange"
 QUEUE_NAME = "test_message_queue"
 ROUTING_KEY = "test_routing_key"
@@ -27,7 +28,10 @@ def getConnection(client):
 
 @inlineCallbacks
 def getChannel(conn):
-    chan = yield conn.channel(1)
+    # create a new channel that we'll use for sending messages; we can use any
+    # numeric id here, only one channel will be created; we'll use this channel
+    # for all the messages that we send
+    chan = yield conn.channel(3)
     # open a virtual connection; channels are used so that heavy-weight TCP/IP
     # connections can be used my multiple light-weight connections (channels)
     yield chan.channel_open()
