@@ -50,6 +50,7 @@ def main(spec, credentials):
         vhost="/", spec=spec)
     conn = yield consumer.connectTCP(
         common.RABBIT_MQ_HOST, common.RABBIT_MQ_PORT)
+    # XXX set credentials here
     chan = yield common.getChannel(conn, credentials)
     queue = yield getQueue(conn, chan)
     while True:
