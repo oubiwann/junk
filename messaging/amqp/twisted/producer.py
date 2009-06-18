@@ -34,14 +34,17 @@ def cleanUp(conn, chan):
 @inlineCallbacks
 def main(spec, credentials):
     delegate = TwistedDelegate()
+    # create the Twisted producer client
     producer = ClientCreator(
         reactor, AMQClient, delegate=delegate,
         vhost="/", spec=spec)
-    conn = yield producer.connectTCP(
-        common.RABBIT_MQ_HOST, common.RABBIT_MQ_PORT)
-    # XXX set credentials here
+    # connect to the RabbitMQ server
+    conn = yield common.getConnection(producer)
+    # get the channel
     chan = yield common.getChannel(conn, credentials)
+    # send the text to the RabbitMQ server
     yield pushText(chan, sys.argv[2])
+    # shut everything down
     yield cleanUp(conn, chan)
 
 

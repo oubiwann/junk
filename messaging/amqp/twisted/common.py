@@ -16,9 +16,15 @@ credentials = {"LOGIN": "guest", "PASSWORD": "guest"}
 
 
 @inlineCallbacks
-def getChannel(conn, credentials):
-    # XXX move creds out of here and into connection creation
+def getConnection(client):
+    conn = yield client.connectTCP(
+        RABBIT_MQ_HOST, RABBIT_MQ_PORT)
     yield conn.start(credentials)
+    returnValue(conn)
+
+
+@inlineCallbacks
+def getChannel(conn, credentials):
     chan = yield conn.channel(1)
     yield chan.channel_open()
     returnValue(chan)

@@ -50,13 +50,15 @@ def processMessage(chan, queue):
 @inlineCallbacks
 def main(spec, credentials):
     delegate = TwistedDelegate()
+    # create the Twisted consumer client
     consumer = ClientCreator(
         reactor, AMQClient, delegate=delegate,
         vhost="/", spec=spec)
-    conn = yield consumer.connectTCP(
-        common.RABBIT_MQ_HOST, common.RABBIT_MQ_PORT)
-    # XXX set credentials here
+    # connect to the RabbitMQ server
+    conn = yield common.getConnection(consumer)
+    # get the channel
     chan = yield common.getChannel(conn, credentials)
+    # get the message queue
     queue = yield getQueue(conn, chan)
     while True:
         yield processMessage(chan, queue)
