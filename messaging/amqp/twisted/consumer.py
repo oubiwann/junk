@@ -13,16 +13,17 @@ import common
 
 @inlineCallbacks
 def getQueue(conn, chan):
-    # in order to get the queue, we've got some setup to do...
+    # in order to get the queue, we've got some setup to do; keep in mind that
+    # we're not interested in persisting messages
     #
     # create an exchange on the message server
     yield chan.exchange_declare(
         exchange=common.EXCHANGE_NAME, type="direct",
-        durable=True, auto_delete=False)
+        durable=False, auto_delete=True)
     # create a message queue on the message server
     yield chan.queue_declare(
-        queue=common.QUEUE_NAME, durable=True, exclusive=False,
-        auto_delete=False)
+        queue=common.QUEUE_NAME, durable=False, exclusive=False,
+        auto_delete=True)
     # bind the exchange and the message queue
     yield chan.queue_bind(
         queue=common.QUEUE_NAME, exchange=common.EXCHANGE_NAME,
@@ -48,7 +49,7 @@ def processMessage(chan, queue):
 
 
 @inlineCallbacks
-def main(spec, credentials):
+def main(spec):
     delegate = TwistedDelegate()
     # create the Twisted consumer client
     consumer = ClientCreator(
@@ -57,7 +58,7 @@ def main(spec, credentials):
     # connect to the RabbitMQ server
     conn = yield common.getConnection(consumer)
     # get the channel
-    chan = yield common.getChannel(conn, credentials)
+    chan = yield common.getChannel(conn)
     # get the message queue
     queue = yield getQueue(conn, chan)
     while True:
@@ -69,5 +70,5 @@ if __name__ == "__main__":
         print "%s path_to_spec" % sys.argv[0]
         sys.exit(1)
     spec = txamqp.spec.load(sys.argv[1])
-    main(spec, common.credentials)
+    main(spec)
     reactor.run()

@@ -15,7 +15,9 @@ import common
 @inlineCallbacks
 def pushText(chan, body):
     msg = Content(body)
-    msg["delivery mode"] = common.PERSISTENT
+    # we don't want to see these test messages every time the consumer connects
+    # to the RabbitMQ server, so we opt for non-persistent delivery
+    msg["delivery mode"] = common.NON_PERSISTENT
     yield chan.basic_publish(
         exchange=common.EXCHANGE_NAME, content=msg,
         routing_key=common.ROUTING_KEY)
@@ -32,7 +34,7 @@ def cleanUp(conn, chan):
 
 
 @inlineCallbacks
-def main(spec, credentials):
+def main(spec):
     delegate = TwistedDelegate()
     # create the Twisted producer client
     producer = ClientCreator(
@@ -41,7 +43,7 @@ def main(spec, credentials):
     # connect to the RabbitMQ server
     conn = yield common.getConnection(producer)
     # get the channel
-    chan = yield common.getChannel(conn, credentials)
+    chan = yield common.getChannel(conn)
     # send the text to the RabbitMQ server
     yield pushText(chan, sys.argv[2])
     # shut everything down
@@ -53,5 +55,5 @@ if __name__ == "__main__":
         print "%s path_to_spec content" % sys.argv[0]
         sys.exit(1)
     spec = txamqp.spec.load(sys.argv[1])
-    main(spec, common.credentials)
+    main(spec)
     reactor.run()

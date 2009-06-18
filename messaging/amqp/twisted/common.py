@@ -19,13 +19,17 @@ credentials = {"LOGIN": "guest", "PASSWORD": "guest"}
 def getConnection(client):
     conn = yield client.connectTCP(
         RABBIT_MQ_HOST, RABBIT_MQ_PORT)
+    # start the connection negotiation process, sending security mechanisms
+    # which the client can use for authentication
     yield conn.start(credentials)
     returnValue(conn)
 
 
 @inlineCallbacks
-def getChannel(conn, credentials):
+def getChannel(conn):
     chan = yield conn.channel(1)
+    # open a virtual connection; channels are used so that heavy-weight TCP/IP
+    # connections can be used my multiple light-weight connections (channels)
     yield chan.channel_open()
     returnValue(chan)
 
