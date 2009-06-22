@@ -37,7 +37,6 @@ class ProcessOrder(resource.Resource):
         item = request.args["item"][0]
         size = request.args["size"][0]
         # code for saving these to a database
-        # code that creates a new order message
         return THANKS
 
 
