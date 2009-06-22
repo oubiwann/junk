@@ -24,8 +24,28 @@ PERSISTENT = 2
 credentials = {"LOGIN": "guest", "PASSWORD": "guest"}
 
 
+def createClient():
+    specFile = os.path.join(os.path.dirname(__file__), "amqp0-8.xml")
+    # create the Twisted producer client
+    return ClientCreator(
+        reactor, AMQClient, delegate=TwistedDelegate(),
+        vhost=VHOST, spec=spec.load(specFile))
+
+
 @inlineCallbacks
-def getChannel(connection):
+def getConnection():
+    client = createClient()
+    connection = yield client.connectTCP(
+        RABBIT_MQ_HOST, RABBIT_MQ_PORT)
+    # start the connection negotiation process, sending security mechanisms
+    # which the client can use for authentication
+    yield connection.start(credentials)
+    returnValue(connection)
+
+
+@inlineCallbacks
+def getChannel():
+    connection = getConnection()
     # create a new channel that we'll use for sending messages; we can use any
     # numeric id here, only one channel will be created; we'll use this channel
     # for all the messages that we send
@@ -35,23 +55,6 @@ def getChannel(connection):
     yield channel.channel_open()
     returnValue(channel)
 
-
-@inlineCallbacks
-def getConnection(client):
-    connection = yield client.connectTCP(
-        RABBIT_MQ_HOST, RABBIT_MQ_PORT)
-    # start the connection negotiation process, sending security mechanisms
-    # which the client can use for authentication
-    yield connection.start(credentials)
-    returnValue(connection)
-
-
-def createProducer():
-    specFile = os.path.join(os.path.dirname(__file__), "amqp0-8.xml")
-    # create the Twisted producer client
-    return ClientCreator(
-        reactor, AMQClient, delegate=TwistedDelegate(),
-        vhost=VHOST, spec=spec.load(specFile))
 
 @inlineCallbacks
 def cleanUp(connection, channel):

@@ -13,12 +13,10 @@ def createOrderMessage(data, source):
 
 
 @inlineCallbacks
-def sendMessage(requestArgs):
+def sendMessage(data, source):
     # create the message from the shopping cart request
-    message = createOrderMessage(requestArgs, "web store")
+    message = createOrderMessage(data, source)
     # connect to messaging server and get channel
-    producer = common.createProducer()
-    connection = yield common.getConnection(producer)
     channel = yield common.getChannel(connection)
     # send the message to the message queue
     yield channel.basic_publish(

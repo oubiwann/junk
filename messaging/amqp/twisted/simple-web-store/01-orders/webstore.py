@@ -50,7 +50,7 @@ class ProcessOrder(Resource):
         # code for saving these to a database
         databaseCalls = "dummy"
         # code that creates a new order message
-        endpoint.sendMessage(request.args)
+        endpoint.sendMessage(request.args, "web-store")
         try:
             request.write(THANKS)
         except Exception, error:
