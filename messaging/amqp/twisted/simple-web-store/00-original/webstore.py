@@ -5,6 +5,7 @@ FORM = """
 <html>
 <body>
 <form action="/processOrder" method="put">
+<input type="hidden" name="orderID" value="01234" />
 <input type="text" name="item" value="kilt"><br/>
 <input type="text" name="size" value="large"<br/>
 <input type="submit" value="Place Order" />
@@ -36,6 +37,7 @@ class ProcessOrder(resource.Resource):
     def render_GET(self, request):
         item = request.args["item"][0]
         size = request.args["size"][0]
+        order_id = request.args["orderID"][0]
         # code for saving these to a database
         return THANKS
 

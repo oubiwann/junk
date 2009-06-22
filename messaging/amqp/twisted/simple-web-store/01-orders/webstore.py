@@ -10,6 +10,7 @@ FORM = """
 <body>
 <p><strong>Shopping Cart</stong></p>
 <form action="/processOrder" method="put">
+<input type="hidden" name="orderID" value="01234" />
 <input type="text" name="item" value="kilt"><br/>
 <input type="text" name="size" value="large"<br/>
 <input type="submit" value="Place Order" />
@@ -49,7 +50,7 @@ class ProcessOrder(Resource):
         # code for saving these to a database
         databaseCalls = "dummy"
         # code that creates a new order message
-        endpoint.sendMessage(request)
+        endpoint.sendMessage(request.args)
         try:
             request.write(THANKS)
         except Exception, error:
