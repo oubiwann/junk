@@ -8,8 +8,13 @@ with:
 from zope.testbrowser.browser import Browser
 from storm.locals import DateTime, Store, Unicode, create_database
 
+DONE = "done"
+INPROGRESS = "inprogress"
+TODO = "todo"
+POSTPONED = "postponed"
 
-WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
+WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage"
+#WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
 
 
 class WorkItem(object):
@@ -23,6 +28,11 @@ class WorkItem(object):
     assignee = Unicode()
     milestone = Unicode()
     date = DateTime()
+
+    def is_dropped(self):
+        if self.status == POSTPONED and self.milestone.strip():
+            return False
+        return True
 
 
 class Blueprint(object):
@@ -58,8 +68,12 @@ class WikiWorkItem(object):
     def __init__(self, header_line, data_line):
         self.header_line = header_line
         self.line = data_line
+        self.headers = None
+
+    def parse(self, header_line, data_line):
         self.headers = self.extract_headers(self.header_line)
         self.set_attributes(data_line)
+        
 
     @staticmethod
     def split_fields(line):
@@ -95,6 +109,13 @@ class WikiWorkItem(object):
         for header, data in zip(self.headers, splits):
             index, header_name, attr = header
             setattr(self, attr, unicode(data))
+
+    @staticmethod
+    def join(list_of_items):
+        return "%s%s%s" % (
+            WikiWorkItem.split_on,
+            WikiWorkItem.split_on.join(list_of_items), 
+            WikiWorkItem.split_on)
 
 
 class WikiRawLine(object):
@@ -153,21 +174,28 @@ class WikiData(object):
     def get_blueprints(self):
         return self.blueprints.values()
 
+    @staticmethod
+    def join(list_of_items):
+        return "%s%s%s" % (
+            WikiData.split_on,
+            WikiData.split_on.join(list_of_items), 
+            WikiData.split_on)
+
 
 def login(browser, username, password):
     print "Logging into the wiki..."
     browser.getLink("Log In / Register").click()
     # First stage
-    print "Sending credentials to wiki..."
+    print "\tSending credentials to wiki..."
     form = browser.getForm("loginform")
     form.getControl(name="name").value = username
     form.getControl(name="password").value = password
     form.submit()
     # Second stage
-    print "Confirming openid..."
+    print "\tConfirming openid..."
     browser.getForm("openid_message").submit()
     # Third stage
-    print "Sending launchpad credentials..."
+    print "\tSending launchpad credentials..."
     form = browser.getForm()
     form.getControl(name="field.email").value = username
     form.getControl(name="field.password").value = password
@@ -182,8 +210,7 @@ def get_wiki_data(form_data):
     return wiki_data
 
 
-def get_status(wiki_data, path):
-    print "Getting feature status..."
+def get_correlated_status(wiki_data, path):
     blueprints = [x.id for x in wiki_data.get_blueprints()]
     database = create_database("sqlite:%s" % path)
     store = Store(database)
@@ -194,13 +221,42 @@ def get_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
+def get_status(wiki_data, path):
+    print "Getting work items status..."
+    database = create_database("sqlite:%s" % path)
+    store = Store(database)
+    results = store.find(WorkItem, WorkItem.status==POSTPONED)
+    if results.count() == 0:
+        raise ValueError("No matches found in the database.")
+    # Order them by priority, blueprint name, and then description.
+    results.order_by(
+        WorkItem.blueprint.priority, WorkItem.spec, WorkItem.description)
+    return results
+
+
 def update_wiki_data(browser, status_data):
     print "Modifiying wiki data with latest status info..."
-    import pdb;pdb.set_trace()
 
 
-def replace_wiki_data(browser, status_data):
-    pass
+def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
+    print "Updating the wiki page with the latest data..."
+    wiki_data = WikiData()
+    separator = WikiWorkItem.join(["<#999999>"]*4)
+    # Get all postponed work items.
+    last_priority = None
+    for result in status_data:
+        if result.is_dropped()
+            # color last cell orange, make contents "dropped"
+            status = None
+        else:
+            # color last cell yellow, make contents milestone
+            status = None
+        work_item = WikiWorkItem(
+            result.spec, result.blueprint.priority, result.description, status)
+        # Check to see if the priority is the same; if so, just add the work
+        # item; if it has changed, insert a separator and then add the work
+        # item.
+    return wiki_data
 
 
 def update_page_data(browser, database):
@@ -208,19 +264,23 @@ def update_page_data(browser, database):
     form = browser.getForm("editor")
     data = form.getControl(name="savetext").value
     wiki_data = get_wiki_data(data)
-    status_data = get_status(wiki_data, database)
+    status_data = get_correlated_status(wiki_data, database)
     update_wiki_data(browser, status_data)
     form.submit(name="XXX")
 
 
-def replace_page_data(browser, database):
+def replace_page_data(browser, database, trivial=False):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
+    if trivial:
+        # XXX - update the checkbox with trival = True
+        pass
     data = form.getControl(name="savetext").value
     wiki_data = get_wiki_data(data)
     status_data = get_status(wiki_data, database)
-    replace_wiki_data(browser, status_data, prepend=wiki_data.header_line)
-    form.getControl(name="savetext").value = 
+    data = get_new_wiki_data(
+        browser, status_data, prepend=wiki_data.header_line)
+    form.getControl(name="savetext").value = data
     form.submit(name="XXX")
 
 
@@ -233,6 +293,11 @@ def main(username, password, database):
 if __name__ == "__main__":
     import sys
     try:
+        # XXX add support for:
+        # - passing a date
+        # - passing a wiki page
+        # - last milestone
+        # - next milestone
         main(*sys.argv[1:])
     except TypeError:
         # Not enough parameters were passed
