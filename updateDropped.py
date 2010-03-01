@@ -57,12 +57,24 @@ class Blueprint(object):
 Blueprint.work_items = ReferenceSet(Blueprint.name, WorkItem.spec)
 
 
-class WikiWorkItem(object):
+class WikiRawLine(object):
+    """
+    An object that simply holds a raw wiki line for later use.
+    """
+    split_on = "||"
+
+    def __init__(self, line):
+        self.line = line
+
+    def render(self):
+        return self.line
+
+
+class WikiWorkItem(WikiRawLine):
     """
     A convenience object for storing and accessing work item data from the wiki
     page.
     """
-    split_on = "||"
     marker = "UbuntuSpec:"
 
     def __init__(self, spec=None, priority=None, description=None, status=None):
@@ -77,13 +89,13 @@ class WikiWorkItem(object):
     def parse(self, header_line, data_line):
         self.headers = self.extract_headers(self.header_line)
         self.set_attributes(data_line)
-        
+
 
     @staticmethod
     def split_fields(line):
         # Skip first and last element, since those are non-entires, artifacts
         # of the split.
-        return [x.strip() 
+        return [x.strip()
                 for x in header_line.split(WikiWorkItem.split_on)[1:-1]
 
     @staticmethod
@@ -118,16 +130,12 @@ class WikiWorkItem(object):
     def join(list_of_items):
         return "%s%s%s" % (
             WikiWorkItem.split_on,
-            WikiWorkItem.split_on.join(list_of_items), 
+            WikiWorkItem.split_on.join(list_of_items),
             WikiWorkItem.split_on)
 
-
-class WikiRawLine(object):
-    """
-    An object that simply holds a raw wiki line for later use.
-    """
-    def __init__(self, line):
-        self.line = line
+    def render(self):
+        data = [self.spec, self.priority, self.description, self.status]
+        return self.join(data)
 
 
 class WikiBlueprint(object):
@@ -150,20 +158,27 @@ class WikiData(object):
     """
     split_on = "\r\n"
 
-    def __init__(self, form_data):
-        self.raw_data = form_data
-        self.lines = form_data.split(self.split_on)
-        self.header_line = self.lines[0]
+    def __init__(self, initial_row=None, form_data=None):
+        self.raw_data = None
+        self.lines = None
+        self.header_line = None
         self.line_objects = []
         self.blueprints = {}
         self.has_blueprints = False
+        if initial_row:
+            self.add_raw_item(initial_row)
+        if form_data:
+            self.parse(form_data)
+
+    def parse(self, form_data):
+        self.raw_data = form_data
+        self.lines = form_data.split(self.split_on)
+        self.header_line = self.lines[0]
         for line in lines:
             if line.startswith(
                 "%s%s" % (WikiWorkItem.split_on, WikiWorkItem.marker)):
                 line_object = WikiWorkItem(header_line, line)
-                blueprint = self.get_blueprint(line_object.spec)
-                blueprint.add_work_item(line_object)
-                self.has_blueprints = True
+                self.add_work_item(line_object)
             else:
                 line_object = WikiRawLine(line)
             self.line_objects.append(line_object)
@@ -178,12 +193,32 @@ class WikiData(object):
     def get_blueprints(self):
         return self.blueprints.values()
 
+    def add_work_item(self, work_item):
+        self.line_objects.append(work_item)
+        blueprint = self.get_blueprint(work_item.spec)
+        blueprint.add_work_item(work_item)
+        if not self.has_blueprint:
+            self.has_blueprints = True
+
+    def add_separator(self, color="#999999"):
+        separator = WikiWorkItem.join(["<#999999>"]*4)
+        self.line_objects.append(separator)
+
+    def add_raw_item(self, string):
+        raw_item = WikiRawItem(string)
+        self.line_objects.append(raw_item)
+
     @staticmethod
     def join(list_of_items):
         return "%s%s%s" % (
             WikiData.split_on,
-            WikiData.split_on.join(list_of_items), 
+            WikiData.split_on.join(list_of_items),
             WikiData.split_on)
+
+    def render(self):
+        output = ""
+        for line_object in self.line_objects:
+            output += line_object.render()
 
 
 def login(browser, username, password):
@@ -221,7 +256,7 @@ def get_correlated_status(wiki_data, path):
     results = store.find(Blueprint, Blueprint.name.is_in(blueprints))
     if results.count() == 0:
         raise ValueError("No matches found in the database.")
-    # XXX We may want to munge status data differently here... 
+    # XXX We may want to munge status data differently here...
     return [(x.name, x.implementation) for x in results]
 
 
@@ -244,7 +279,7 @@ def update_wiki_data(browser, status_data):
 
 def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     print "Updating the wiki page with the latest data..."
-    wiki_data = WikiData()
+    wiki_data = WikiData(prepend)
     separator = WikiWorkItem.join(["<#999999>"]*4)
     # Get all postponed work items.
     last_priority = None
