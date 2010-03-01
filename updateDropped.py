@@ -65,9 +65,13 @@ class WikiWorkItem(object):
     split_on = "||"
     marker = "UbuntuSpec:"
 
-    def __init__(self, header_line, data_line):
-        self.header_line = header_line
-        self.line = data_line
+    def __init__(self, spec=None, priority=None, description=None, status=None):
+        self.spec = spec
+        self.priority = priority
+        self.description = description
+        self.status = status
+        self.header_line = None
+        self.line = None
         self.headers = None
 
     def parse(self, header_line, data_line):
