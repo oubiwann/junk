@@ -1,6 +1,9 @@
 """
-To use this script, you need to pass your Launchpad username and password, as
-well as the full path to the SQLite database you are working with.
+To use this script, you need to pass your Launchpad username (email address)
+and password, as well as the full path to the SQLite database you are working
+with:
+
+    %s username password /home/manager/Downloads/lucid.db
 """
 from zope.testbrowser.browser import Browser
 from storm.locals import create_database, Unicode, Store
@@ -10,6 +13,9 @@ WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
 
 
 class Blueprint(object):
+    """
+    The data model for the 
+    """
     __storm_table__ = "specs"
     name = Unicode(primary=True)
     url = Unicode()
@@ -25,49 +31,69 @@ class Blueprint(object):
     details_url = Unicode()
 
 
-def get_dropped_features(blueprints):
+def get_status(blueprints, path):
+    print "Getting feature status..."
     database = create_database("sqlite:%s" % path)
     store = Store(database)
     results = store.find(Blueprint, Blueprint.name.is_in(blueprints))
-    import pdb;pdb.set_trace()
-
-
-def get_blueprint_names(form_data):
-    lines = form_data.split("\r\n")
-    split_on = "||"
-    marker = "UbuntuSpec:"
-    return [unicode(x.split(split_on)[1].lstrip(marker)) for x in lines 
-            if x.startswith("%s%s" % (split_on, marker)]
+    if results.count() == 0:
+        raise ValueError("No matches found in the database.")
+    # XXX We may want to munge status data differently here... 
+    return [(x.name, x.implementation) for x in results]
 
 
 def login(browser, username, password):
+    print "Logging into the wiki..."
     browser.getLink("Log In / Register").click()
     # First stage
+    print "Sending credentials to wiki..."
     form = browser.getForm("loginform")
     form.getControl(name="name").value = username
     form.getControl(name="password").value = password
     form.submit()
     # Second stage
+    print "Confirming openid..."
     browser.getForm("openid_message").submit()
     # Third stage
+    print "Sending launchpad credentials..."
     form = browser.getForm()
     form.getControl(name="field.email").value = username
     form.getControl(name="field.password").value = password
     form.submit(name="field.actions.continue")
 
 
-def update_page(browser):
+def get_blueprint_names(form_data):
+    print "Extracting blueprint names from wiki page..."
+    lines = form_data.split("\r\n")
+    split_on = "||"
+    marker = "UbuntuSpec:"
+    data = [unicode(x.split(split_on)[1].lstrip(marker).strip()) for x in lines
+            if x.startswith("%s%s" % (split_on, marker))]
+    if len(data) == 0:
+        raise ValueError("No blueprints found.")
+    return data
+
+
+def update_wiki_data(browser, status_data):
+    print "Modifiying wiki data with latest status info..."
+    import pdb;pdb.set_trace()
+
+
+def update_page(browser, database):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
     data = form.getControl(name="savetext").value
     blueprint_names = get_blueprint_names(data)
-    dropped_features = get_dropped_features(blueprint_names)
+    status_data = get_status(blueprint_names, database)
+    update_wiki_data(browser, status_data)
+    form.submit(name="XXX")
 
 
 def main(username, password, database):
     browser = Browser(WIKI_PAGE)
     login(browser, username, password)
-    update_page(browser)
+    update_page(browser, database)
+
 
 if __name__ == "__main__":
     import sys
@@ -75,7 +101,7 @@ if __name__ == "__main__":
         main(*sys.argv[1:])
     except TypeError:
         # Not enough parameters were passed
-        print __doc__
+        print __doc__ % sys.argv[0]
         sys.exit(1)
 
 """
