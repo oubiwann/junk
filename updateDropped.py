@@ -6,15 +6,28 @@ with:
     %s username password /home/manager/Downloads/lucid.db
 """
 from zope.testbrowser.browser import Browser
-from storm.locals import create_database, Unicode, Store
+from storm.locals import DateTime, Store, Unicode, create_database
 
 
 WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
 
 
+class WorkItem(object):
+    """
+    The data model for the work items in the SQLite database.
+    """
+    __storm_table__ = "work_items"
+    description = Unicode()
+    spec = Unicode()
+    status = Unicode()
+    assignee = Unicode()
+    milestone = Unicode()
+    date = DateTime()
+
+
 class Blueprint(object):
     """
-    The data model for the 
+    The data model for the specs in the SQLite database.
     """
     __storm_table__ = "specs"
     name = Unicode(primary=True)
@@ -29,6 +42,9 @@ class Blueprint(object):
     drafter = Unicode()
     approver = Unicode()
     details_url = Unicode()
+
+
+Blueprint.work_items = ReferenceSet(Blueprint.name, WorkItem.spec)
 
 
 def get_status(blueprints, path):
