@@ -110,8 +110,12 @@ class WikiBlueprint(object):
     A convenience object for storing and accessing blueprint data from the wiki
     page.
     """
-    def __init__(self, form_data):
-        self.workitems = []
+    def __init__(self, id):
+        self.id = id
+        self.work_items = []
+
+    def add_work_item(self, work_item_wiki_object):
+        self.work_items.append(work_item_wiki_object)
 
 
 class WikiData(object):
@@ -126,26 +130,28 @@ class WikiData(object):
         self.lines = form_data.split(self.split_on)
         self.header_line = self.lines[0]
         self.line_objects = []
+        self.blueprints = {}
         self.has_blueprints = False
         for line in lines:
             if line.startswith(
                 "%s%s" % ( WikiWorkItem.split_on, WikiWorkItem.marker)):
                 line_object = WikiWorkItem(header_line, line)
+                blueprint = self.get_blueprint(line_object.spec)
+                blueprint.add_work_item(line_object)
                 self.has_blueprints = True
             else:
                 line_object = WikiRawLine(line)
             self.line_objects.append(line_object)
 
+    def get_blueprint(self, id):
+        blueprint = self.blueprints.get(id)
+        if not blueprint:
+            blueprint = WikiBlueprint(id)
+            self.blueprints[id] = blueprint
+        return blueprint
 
-def get_status(blueprints, path):
-    print "Getting feature status..."
-    database = create_database("sqlite:%s" % path)
-    store = Store(database)
-    results = store.find(Blueprint, Blueprint.name.is_in(blueprints))
-    if results.count() == 0:
-        raise ValueError("No matches found in the database.")
-    # XXX We may want to munge status data differently here... 
-    return [(x.name, x.implementation) for x in results]
+    def get_blueprints(self):
+        return self.blueprints.values()
 
 
 def login(browser, username, password):
@@ -168,12 +174,24 @@ def login(browser, username, password):
     form.submit(name="field.actions.continue")
 
 
-def get_blueprint_names(form_data):
-    print "Extracting blueprint names from wiki page..."
+def get_wiki_data(form_data):
+    print "Extracting blueprints and work items from wiki page..."
     wiki_data = WikiData(form_data)
-    if len(data) == 0:
+    if not wiki_data.has_blueprints:
         raise ValueError("No blueprints found.")
-    return data
+    return wiki_data
+
+
+def get_status(wiki_data, path):
+    print "Getting feature status..."
+    blueprints = [x.id for x in wiki_data.get_blueprints()]
+    database = create_database("sqlite:%s" % path)
+    store = Store(database)
+    results = store.find(Blueprint, Blueprint.name.is_in(blueprints))
+    if results.count() == 0:
+        raise ValueError("No matches found in the database.")
+    # XXX We may want to munge status data differently here... 
+    return [(x.name, x.implementation) for x in results]
 
 
 def update_wiki_data(browser, status_data):
@@ -185,8 +203,8 @@ def update_page(browser, database):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
     data = form.getControl(name="savetext").value
-    blueprint_names = get_blueprint_names(data)
-    status_data = get_status(blueprint_names, database)
+    wiki_data = get_wiki_data(data)
+    status_data = get_status(wiki_data, database)
     update_wiki_data(browser, status_data)
     form.submit(name="XXX")
 
