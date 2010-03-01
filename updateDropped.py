@@ -6,15 +6,22 @@ with:
     %s username password /home/manager/Downloads/lucid.db
 """
 from zope.testbrowser.browser import Browser
-from storm.locals import DateTime, Store, Unicode, create_database
+from storm.locals import (
+    DateTime, ReferenceSet, Store, Unicode, create_database)
 
-DONE = "done"
-INPROGRESS = "inprogress"
-TODO = "todo"
-POSTPONED = "postponed"
+
+DONE = unicode("done")
+INPROGRESS = unicode("inprogress")
+TODO = unicode("todo")
+POSTPONED = unicode("postponed")
+DROPPED = unicode("dropped")
 
 WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage"
 #WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
+
+
+class OptionsError(Exception):
+    pass
 
 
 class WorkItem(object):
@@ -96,7 +103,7 @@ class WikiWorkItem(WikiRawLine):
         # Skip first and last element, since those are non-entires, artifacts
         # of the split.
         return [x.strip()
-                for x in header_line.split(WikiWorkItem.split_on)[1:-1]
+                for x in header_line.split(WikiWorkItem.split_on)[1:-1]]
 
     @staticmethod
     def extract_headers(header_line):
@@ -166,7 +173,7 @@ class WikiData(object):
         self.blueprints = {}
         self.has_blueprints = False
         if initial_row:
-            self.add_raw_item(initial_row)
+            self.add_raw_line(initial_row)
         if form_data:
             self.parse(form_data)
 
@@ -204,8 +211,8 @@ class WikiData(object):
         separator = WikiWorkItem.join(["<#999999>"]*4)
         self.line_objects.append(separator)
 
-    def add_raw_item(self, string):
-        raw_item = WikiRawItem(string)
+    def add_raw_line(self, string):
+        raw_item = WikiRawLine(string)
         self.line_objects.append(raw_item)
 
     @staticmethod
@@ -216,9 +223,8 @@ class WikiData(object):
             WikiData.split_on)
 
     def render(self):
-        output = ""
-        for line_object in self.line_objects:
-            output += line_object.render()
+        data = [line_object.render() for line_object in self.line_objects]
+        return WikiData.join(data).strip()
 
 
 def login(browser, username, password):
@@ -260,12 +266,13 @@ def get_correlated_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
-def get_status(wiki_data, path):
+def get_status(path):
     print "Getting work items status..."
     database = create_database("sqlite:%s" % path)
     store = Store(database)
     results = store.find(WorkItem, WorkItem.status==POSTPONED)
     if results.count() == 0:
+        import pdb;pdb.set_trace()
         raise ValueError("No matches found in the database.")
     # Order them by priority, blueprint name, and then description.
     results.order_by(
@@ -284,12 +291,12 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     # Get all postponed work items.
     last_priority = None
     for result in status_data:
-        if result.is_dropped()
-            # color last cell orange, make contents "dropped"
-            status = None
+        if result.is_dropped():
+            # Color last cell yellow, make contents "dropped"
+            status = "<#ffff00> %s" % DROPPED
         else:
-            # color last cell yellow, make contents milestone
-            status = None
+            # Make contents the milestone
+            status = result.milestone
         work_item = WikiWorkItem(
             result.spec, result.blueprint.priority, result.description, status)
         # Check to see if the priority is the same; if so, just add the work
@@ -310,16 +317,15 @@ def update_page_data(browser, database):
 
 def replace_page_data(browser, database, trivial=False):
     browser.getLink("Edit").click()
-    form = browser.getForm("editor")
     if trivial:
         # XXX - update the checkbox with trival = True
         pass
-    data = form.getControl(name="savetext").value
-    wiki_data = get_wiki_data(data)
-    status_data = get_status(wiki_data, database)
+    status_data = get_status(database)
     data = get_new_wiki_data(
         browser, status_data, prepend=wiki_data.header_line)
+    form = browser.getForm("editor")
     form.getControl(name="savetext").value = data
+    import pdb;pdb.set_trace()
     form.submit(name="XXX")
 
 
@@ -338,7 +344,7 @@ if __name__ == "__main__":
         # - last milestone
         # - next milestone
         main(*sys.argv[1:])
-    except TypeError:
+    except OptionsError:
         # Not enough parameters were passed
         print __doc__ % sys.argv[0]
         sys.exit(1)
