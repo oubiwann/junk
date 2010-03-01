@@ -134,7 +134,7 @@ class WikiData(object):
         self.has_blueprints = False
         for line in lines:
             if line.startswith(
-                "%s%s" % ( WikiWorkItem.split_on, WikiWorkItem.marker)):
+                "%s%s" % (WikiWorkItem.split_on, WikiWorkItem.marker)):
                 line_object = WikiWorkItem(header_line, line)
                 blueprint = self.get_blueprint(line_object.spec)
                 blueprint.add_work_item(line_object)
@@ -199,7 +199,11 @@ def update_wiki_data(browser, status_data):
     import pdb;pdb.set_trace()
 
 
-def update_page(browser, database):
+def replace_wiki_data(browser, status_data):
+    pass
+
+
+def update_page_data(browser, database):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
     data = form.getControl(name="savetext").value
@@ -209,10 +213,21 @@ def update_page(browser, database):
     form.submit(name="XXX")
 
 
+def replace_page_data(browser, database):
+    browser.getLink("Edit").click()
+    form = browser.getForm("editor")
+    data = form.getControl(name="savetext").value
+    wiki_data = get_wiki_data(data)
+    status_data = get_status(wiki_data, database)
+    replace_wiki_data(browser, status_data, prepend=wiki_data.header_line)
+    form.getControl(name="savetext").value = 
+    form.submit(name="XXX")
+
+
 def main(username, password, database):
     browser = Browser(WIKI_PAGE)
     login(browser, username, password)
-    update_page(browser, database)
+    replace_page_data(browser, database)
 
 
 if __name__ == "__main__":
@@ -223,7 +238,3 @@ if __name__ == "__main__":
         # Not enough parameters were passed
         print __doc__ % sys.argv[0]
         sys.exit(1)
-
-"""
-data = ['kernel-lucid-boot-performance ', 'kernel-lucid-kernel-config-review ', 'kernel-lucid-review-of-ubuntu-delta ', 'dx-lucid-xsplash ', 'mobile-lucid-imx51-debian-cd-to-uboot ', 'mobile-lucid-imx51-debian-cd-to-uboot ', 'mobile-lucid-imx51-debian-cd-to-uboot ', 'mobile-lucid-imx51-debian-cd-to-uboot ', 'mobile-lucid-imx51-debian-cd-to-uboot ', 'foundations-lucid-pre-desktop-lucid-startup-speed ', 'lucid-ubuntu-one-contact-picker ', 'lucid-ubuntu-one-contact-picker ', 'foundations-lucid-pre-desktop-lucid-startup-speed ', 'foundations-lucid-pre-desktop-lucid-startup-speed ', 'dx-lucid-application-indicator ', 'mobile-lucid-arm-lightweightbrowser ', 'dx-lucid-gtk-improvements ', 'dx-lucid-gtk-improvements ', 'dx-lucid-gtk-improvements ', 'dx-lucid-gtk-improvements ', 'dx-lucid-gtk-improvements ', 'desktop-lucid-xorg-triaging-diagnosis ', 'desktop-lucid-xorg-triaging-diagnosis ', 'desktop-lucid-xorg-triaging-diagnosis ', 'desktop-lucid-xorg-triaging-diagnosis ', 'desktop-lucid-startup-speed ', 'desktop-lucid-startup-speed ', 'desktop-lucid-startup-speed ', 'desktop-lucid-startup-speed ', 'desktop-lucid-startup-speed ', 'dx-lucid-application-indicator ', 'dx-lucid-application-indicator ', 'mobile-lucid-arm-per-soc-powermanagement ', 'dx-lucid-me-menu ', 'desktop-lucid-startup-speed ', 'mobile-lucid-arm-lib-tests ', 'mobile-lucid-arm-per-soc-powermanagement ', 'mobile-lucid-arm-device-tree-support ', 'mobile-lucid-arm-device-tree-support ', 'mobile-lucid-arm-device-tree-support ', 'mobile-lucid-arm-device-tree-support ', 'mobile-lucid-arm-device-tree-support ', 'desktop-lucid-xorg-triaging-diagnosis ', 'mobile-lucid-arm-per-soc-powermanagement ', 'server-lucid-uec-testing ', 'server-lucid-daily-vcs ', 'server-lucid-daily-vcs ', 'server-lucid-seeds ', 'mobile-lucid-arm-per-soc-powermanagement ', 'mobile-lucid-arm-lib-tests ', 'mobile-lucid-arm-lib-tests ', 'desktop-lucid-startup-speed ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'mobile-lucid-arm-suspend-resume-testplan ', 'desktop-lucid-startup-speed ', 'desktop-lucid-startup-speed ', 'desktop-lucid-xorg-proprietary-drivers ', 'desktop-lucid-xorg-proprietary-drivers ', 'desktop-lucid-xorg-proprietary-drivers ', 'desktop-lucid-xorg-proprietary-drivers ', 'desktop-lucid-xorg-proprietary-drivers ', 'desktop-lucid-xorg-proprietary-drivers ', 'lucid-qa-community-testing-translations ', 'dx-lucid-notifications ', 'dx-lucid-notifications ', 'dx-lucid-notifications ', 'dx-lucid-notifications ', 'dx-lucid-notifications ', 'foundations-lucid-ubiquity-partitioner-optimisation ', 'foundations-lucid-ubiquity-partitioner-optimisation ', 'foundations-lucid-ubiquity-partitioner-optimisation ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-debian-cd-cleanup ', 'mobile-lucid-arm-debian-cd-cleanup ', 'mobile-lucid-arm-debian-cd-cleanup ', 'mobile-lucid-arm-debian-cd-cleanup ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'mobile-lucid-arm-softboot-loader ', 'dx-lucid-notifications ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-alternate-media-client ', 'mobile-lucid-arm-rootstock-gui ', 'mobile-lucid-liquid ', 'mobile-lucid-liquid ', 'desktop-lucid-bug-management ', 'dx-lucid-session-menu ', 'foundations-lucid-dynamic-cdrom-handling ', 'desktop-lucid-desktop-cloud ', 'foundations-lucid-software-center-ui-improvements ', 'foundations-lucid-software-center-ui-improvements ', 'foundations-lucid-software-center-ui-improvements ', 'foundations-lucid-software-center-ui-improvements ', 'desktop-lucid-compiz-effects ', 'desktop-lucid-compiz-effects ', 'desktop-lucid-desktop-cloud ', 'server-lucid-xc2 ', 'server-lucid-xc2 ', 'server-lucid-xc2 ', 'server-lucid-xc2 ']
-"""
