@@ -47,6 +47,96 @@ class Blueprint(object):
 Blueprint.work_items = ReferenceSet(Blueprint.name, WorkItem.spec)
 
 
+class WikiWorkItem(object):
+    """
+    A convenience object for storing and accessing work item data from the wiki
+    page.
+    """
+    split_on = "||"
+    marker = "UbuntuSpec:"
+
+    def __init__(self, header_line, data_line):
+        self.header_line = header_line
+        self.line = data_line
+        self.headers = self.extract_headers(self.header_line)
+        self.set_attributes(data_line)
+
+    @staticmethod
+    def split_fields(line):
+        # Skip first and last element, since those are non-entires, artifacts
+        # of the split.
+        return [x.strip() 
+                for x in header_line.split(WikiWorkItem.split_on)[1:-1]
+
+    @staticmethod
+    def extract_headers(header_line):
+        """
+        This code is written to be dynamic, but other code will expect the
+        headers to be the following:
+
+            'Spec', 'Priority', 'Work Item Description', 'Status'
+
+        If those ever change, other code may need to be updated.
+        """
+        splits = WikiWorkItem.split_fields(header_line)
+
+        def clean(header_name):
+            return header_name.replace("'", "").strip()
+
+        def sanitize(header_name):
+            return clean(header_name).lower().replace(" ", "_")
+
+        return [(x, clean(y), sanitize(y)) for x, y in enumerate(splits)]
+
+    def set_attributes(self, data_line):
+        if not data_line.startswith("%s%s" % (split_on, marker)):
+            raise ValueError("Invalid data line %s was passed." % data_line)
+        splits = self.split_fields(data_line)
+        for header, data in zip(self.headers, splits):
+            index, header_name, attr = header
+            setattr(self, attr, unicode(data))
+
+
+class WikiRawLine(object):
+    """
+    An object that simply holds a raw wiki line for later use.
+    """
+    def __init__(self, line):
+        self.line = line
+
+
+class WikiBlueprint(object):
+    """
+    A convenience object for storing and accessing blueprint data from the wiki
+    page.
+    """
+    def __init__(self, form_data):
+        self.workitems = []
+
+
+class WikiData(object):
+    """
+    A convenience object for storing and accessing all the wiki form data as
+    objects.
+    """
+    split_on = "\r\n"
+
+    def __init__(self, form_data):
+        self.raw_data = form_data
+        self.lines = form_data.split(self.split_on)
+        self.header_line = self.lines[0]
+        self.line_objects = []
+        self.has_blueprints = False
+        for line in lines:
+            if line.startswith(
+                "%s%s" % ( WikiWorkItem.split_on, WikiWorkItem.marker)):
+                line_object = WikiWorkItem(header_line, line)
+                self.has_blueprints = True
+            else:
+                line_object = WikiRawLine(line)
+            self.line_objects.append(line_object)
+
+
 def get_status(blueprints, path):
     print "Getting feature status..."
     database = create_database("sqlite:%s" % path)
@@ -80,11 +170,7 @@ def login(browser, username, password):
 
 def get_blueprint_names(form_data):
     print "Extracting blueprint names from wiki page..."
-    lines = form_data.split("\r\n")
-    split_on = "||"
-    marker = "UbuntuSpec:"
-    data = [unicode(x.split(split_on)[1].lstrip(marker).strip()) for x in lines
-            if x.startswith("%s%s" % (split_on, marker))]
+    wiki_data = WikiData(form_data)
     if len(data) == 0:
         raise ValueError("No blueprints found.")
     return data
