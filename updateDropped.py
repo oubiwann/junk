@@ -35,11 +35,16 @@ class WorkItem(Storm):
     status = Unicode()
     assignee = Unicode()
     milestone = Unicode()
-    date = DateTime()
+    date = Unicode()
     blueprint = Reference(spec, "Blueprint.name")
 
     def is_dropped(self):
-        if self.status == POSTPONED and self.milestone.strip():
+        if self.milestone:
+            milestone = True
+            if not self.milestone.strip():
+                milestone = False
+        milestone = False
+        if self.status == POSTPONED and milestone:
             return False
         return True
 
@@ -335,9 +340,9 @@ def replace_page_data(browser, database, trivial=False):
         pass
     status_data = get_status(database)
     data = get_new_wiki_data(browser, status_data)
+    import pdb;pdb.set_trace()
     form = browser.getForm("editor")
     form.getControl(name="savetext").value = data
-    import pdb;pdb.set_trace()
     form.submit(name="XXX")
 
 
