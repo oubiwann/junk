@@ -10,11 +10,11 @@ from storm.locals import (
     DateTime, Reference, ReferenceSet, Store, Storm, Unicode, create_database)
 
 
-DONE = unicode("done")
-INPROGRESS = unicode("inprogress")
-TODO = unicode("todo")
-POSTPONED = unicode("postponed")
-DROPPED = unicode("dropped")
+DONE = u"done"
+INPROGRESS = u"inprogress"
+TODO = u"todo"
+POSTPONED = u"postponed"
+DROPPED = u"dropped"
 
 WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage"
 #WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
@@ -49,8 +49,6 @@ class WorkItem(Storm):
         return True
 
 
-
-
 class Blueprint(Storm):
     """
     The data model for the specs in the SQLite database.
@@ -68,6 +66,17 @@ class Blueprint(Storm):
     drafter = Unicode()
     approver = Unicode()
     details_url = Unicode()
+
+    @property
+    def numeric_priority(self):
+        if self.priority == "Essential":
+            return 1
+        elif self.priority == "High":
+            return 2
+        elif self.priority == "Medium":
+            return 3
+        elif self.priority == "Low":
+            return 4
 
 
 Blueprint.work_items = ReferenceSet(Blueprint.name, WorkItem.spec)
@@ -105,7 +114,6 @@ class WikiWorkItem(WikiRawLine):
     def parse(self, header_line, data_line):
         self.headers = self.extract_headers(self.header_line)
         self.set_attributes(data_line)
-
 
     @staticmethod
     def split_fields(line):
@@ -278,32 +286,35 @@ def get_correlated_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
-def get_status(path):
+def get_status(path, date):
     print "Getting work items status..."
     database = create_database("sqlite:%s" % path)
     store = Store(database)
     results = store.find(
         WorkItem,
+        WorkItem.date == date,
         WorkItem.status == POSTPONED,
         WorkItem.spec == Blueprint.name)
     if results.count() == 0:
-        import pdb;pdb.set_trace()
         raise ValueError("No matches found in the database.")
-    # Order them by priority, blueprint name, and then description.
-    results.order_by(
-        Blueprint.priority, WorkItem.spec, WorkItem.description)
-    return results
+    # Order them by priority, blueprint name, and then description. We're not
+    # using Storm/SQL ordering here, because the values for priority don't sort
+    # well.
+    results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
+                     for x in results])
+    return [z for w, x, y, z in results]
 
 
 def update_wiki_data(browser, status_data):
     print "Modifiying wiki data with latest status info..."
+    raise NotImplementedError
 
 
 def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     print "Updating the wiki page with the latest data..."
     header = WikiWorkItem.join(
         ["Spec", "Priority", "Work Item Description", "Status"])
-    separator = WikiWorkItem.join(["<#999999>"]*4)
+    separator = WikiWorkItem.join(["<#999999>"] * 4)
     wiki_data = WikiData()
     wiki_data.add_line(header)
     # Get all postponed work items.
@@ -322,6 +333,7 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         else:
             status = result.milestone
         work_item = WikiWorkItem(
+            # XXX sanitize or convert html a-href's
             result.spec, priority, result.description, status)
         wiki_data.add_line(work_item)
         last_priority = priority
@@ -343,7 +355,8 @@ def replace_page_data(browser, database, trivial=False):
     form = browser.getForm("editor")
     if trivial:
         form.getControl(name="trivial").value = [True]
-    status_data = get_status(database)
+    # XXX use a passed parameter for date
+    status_data = get_status(database, u"2010-03-01")
     data = get_new_wiki_data(browser, status_data)
     form.getControl(name="savetext").value = data
     form.submit(name="button_save")
@@ -352,6 +365,7 @@ def replace_page_data(browser, database, trivial=False):
 def main(username, password, database):
     browser = Browser(WIKI_PAGE)
     login(browser, username, password)
+    # XXX forcing trivial for testing... need to change it back when done
     replace_page_data(browser, database, trivial=True)
 
 
@@ -363,7 +377,7 @@ if __name__ == "__main__":
         # - passing a wiki page
         # - last milestone
         # - next milestone
-        # - add support for trivial 
+        # - add support for trivial
         main(*sys.argv[1:])
     except OptionsError:
         # Not enough parameters were passed
