@@ -1,9 +1,10 @@
 """
+
 To use this script, you need to pass your Launchpad username (email address)
 and password, as well as the full path to the SQLite database you are working
-with:
+with and the URL for the wiki page you wish to update:
 
-    %s username password /full/patch/your/sqlite.db
+    %prog [options]
 """
 import re
 
@@ -291,6 +292,17 @@ def get_correlated_status(wiki_data, path):
 
 def get_status(path, date=None, next_milestone=None):
     print "Getting work items status..."
+
+    def check_milestone(milestone):
+        # If no milestone is set in the options, we want to include all
+        # milestones; if one is set, we want to limit to the legal values.
+        legal_milestone_values = [next_milestone, None, u""]
+        if next_milestone == None:
+            return True
+        elif milestone in legal_milestone_values:
+            return True
+        return False
+
     database = create_database("sqlite:%s" % path)
     store = Store(database)
     results = store.find(
@@ -303,10 +315,8 @@ def get_status(path, date=None, next_milestone=None):
     # Order them by priority, blueprint name, and then description. We're not
     # using Storm/SQL ordering here, because the values for priority don't sort
     # well.
-    legal_milestone_values = [next_milestone, None, u""]
     results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
-                     for x in results
-                     if x.milestone in legal_milestone_values])
+                     for x in results if check_milestone(x.milestone)])
     return [z for w, x, y, z in results]
 
 
@@ -367,39 +377,69 @@ def update_page_data(browser, database):
     form.submit(name="button_save")
 
 
-def replace_page_data(browser, database, trivial=False):
+def replace_page_data(browser, options):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
-    if trivial:
+    if options.trivial:
         form.getControl(name="trivial").value = [True]
-    # XXX use a passed parameter for date
-    # XXX use a passed parameter for milestone
     status_data = get_status(
-        #database, date=u"2010-03-01", next_milestone=u"ubuntu-10.04-beta-1")
-        database, date=u"2010-03-01", next_milestone=u"lucid-alpha-3")
+        options.database, date=options.date, next_milestone=options.milestone)
     data = get_new_wiki_data(browser, status_data)
     form.getControl(name="savetext").value = data
     form.submit(name="button_save")
 
 
-def main(username, password, database):
-    browser = Browser(WIKI_PAGE)
-    login(browser, username, password)
-    # XXX forcing trivial for testing... need to change it back when done
-    replace_page_data(browser, database, trivial=True)
+def main(options):
+    browser = Browser(options.url)
+    login(browser, options.username, options.password)
+    replace_page_data(browser, options)
 
 
 if __name__ == "__main__":
-    import sys
-    try:
-        # XXX add support for:
-        # - passing a date
-        # - passing a wiki page
-        # - last milestone
-        # - next milestone
-        # - add support for trivial
-        main(*sys.argv[1:])
-    except OptionsError:
-        # Not enough parameters were passed
-        print __doc__ % sys.argv[0]
-        sys.exit(1)
+    from copy import copy
+    from datetime import datetime
+    from optparse import Option, OptionParser, OptionValueError
+
+    def check_unicode(option, opt, value):
+        try:
+            return unicode(value)
+        except ValueError, error:
+            raise OptionValueError(error)
+
+    class CustomOption(Option):
+        TYPES = Option.TYPES + ("unicode",)
+        TYPE_CHECKER = copy(Option.TYPE_CHECKER)
+        TYPE_CHECKER["unicode"] = check_unicode
+
+    date = datetime.now().strftime("%Y-%m-%d")
+    parser = OptionParser(usage=__doc__, option_class=CustomOption)
+    parser.add_option(
+        "-u", "--user", dest="username",
+        help="Launchpad username (email address)")
+    parser.add_option(
+        "-p", "--password", dest="password",
+        help="password for Launchpad account")
+    parser.add_option(
+        "-d", "--database", dest="database",
+        help="full path to the SQLite database")
+    parser.add_option(
+        "--url", dest="url", help="wiki page to update")
+    parser.add_option(
+        "-m", "--milestone", dest="milestone", type="unicode",
+        help="limit the reults to the given milestone")
+    parser.add_option(
+        "--date", dest="date", default=date, type="unicode",
+        help="query historical data for the given date")
+    parser.add_option(
+        "-t", "--trivial", dest="trivial", default=False, action="store_true",
+        help="save the wiki page as a trivial change")
+    (options, args) = parser.parse_args()
+    if not options.username:
+        parser.error("username is required")
+    if not options.password:
+        parser.error("password is required")
+    if not options.database:
+        parser.error("the path to the database is required")
+    if not options.url:
+        parser.error("a wiki URL is required")
+    main(options)
