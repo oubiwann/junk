@@ -3,7 +3,7 @@ To use this script, you need to pass your Launchpad username (email address)
 and password, as well as the full path to the SQLite database you are working
 with:
 
-    %s username password /home/manager/Downloads/lucid.db
+    %s username password /full/patch/your/sqlite.db
 """
 import re
 
@@ -325,7 +325,7 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         if text == "Essential":
             color = "FF6666"
         elif text == "High":
-            color = "FF6633"
+            color = "FF9966"
         elif text == "Medium":
             color = "FFFF66"
         elif text == "Low":
@@ -350,7 +350,6 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         # Check to see if the work item was dropped or just postponed.
         status = result.milestone or "<#ffff00> %s" % DROPPED
         work_item = WikiWorkItem(
-            # XXX sanitize or convert html a-href's
             "UbuntuSpec:%s" % result.spec, color_priority(priority),
             strip_html(result.description), status)
         wiki_data.add_line(work_item)
