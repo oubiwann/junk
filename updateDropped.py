@@ -34,9 +34,22 @@ class Milestone(object):
     """
     A convenience object that encapsulates milestone comparison logic.
     """
+    # IMPORTANT!!! This needs to be maintained with every new milestone that
+    # makes it into the SQLite database!
+    legal_values = [
+        "jaunty-updates",
+        "lucid-alpha-1",
+        "lucid-alpha-2",
+        "lucid-alpha-3",
+        "ubuntu-10.04-beta-1",
+        "ubuntu-10.04-beta-2",
+        "ubuntu-10.04",
+        "later",
+        ]
+
     def __init__(self, name):
         self.name = name.lower()
-        self.value = self.get_value(self.name)
+        self.value = self.legal_values.index(self.name)
 
     def __cmp__(self, other):
         if self.value > other.value:
@@ -45,27 +58,6 @@ class Milestone(object):
             return -1
         else:
             return 0
-
-    def get_value(self, name):
-        # Start at an arbitrary, high value so that we can insert others
-        # "below" that later. Also, leave room for insertions.
-        if name == "jaunty-updates":
-            value = 100
-        elif name == "lucid-alpha-1":
-            value = 200
-        elif name == "lucid-alpha-2":
-            value = 300
-        elif name == "lucid-alpha-3":
-            value = 400
-        elif name == "ubuntu-10.04-beta-1":
-            value = 500
-        elif name == "ubuntu-10.04-beta-2":
-            value = 600
-        elif name == "ubuntu-10.04":
-            value = 700
-        elif name == "later":
-            value = 800
-        return value
 
 
 class WorkItem(Storm):
@@ -339,7 +331,8 @@ def sort_work_items(work_items):
         return False
 
     results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
-                     for x in results if check_milestone(x.milestone)])
+                     for x in results])
+                     #for x in results if check_milestone(x.milestone)])
     return [z for w, x, y, z in results]
 
 
