@@ -5,6 +5,8 @@ with:
 
     %s username password /home/manager/Downloads/lucid.db
 """
+import re
+
 from zope.testbrowser.browser import Browser
 from storm.locals import (
     DateTime, Reference, ReferenceSet, Store, Storm, Unicode, create_database)
@@ -16,7 +18,8 @@ TODO = u"todo"
 POSTPONED = u"postponed"
 DROPPED = u"dropped"
 
-WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage"
+WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage2"
+#WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage"
 #WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
 
 
@@ -286,7 +289,7 @@ def get_correlated_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
-def get_status(path, date):
+def get_status(path, date=None, next_milestone=None):
     print "Getting work items status..."
     database = create_database("sqlite:%s" % path)
     store = Store(database)
@@ -300,8 +303,10 @@ def get_status(path, date):
     # Order them by priority, blueprint name, and then description. We're not
     # using Storm/SQL ordering here, because the values for priority don't sort
     # well.
+    legal_milestone_values = [next_milestone, None, u""]
     results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
-                     for x in results])
+                     for x in results
+                     if x.milestone in legal_milestone_values])
     return [z for w, x, y, z in results]
 
 
@@ -312,8 +317,24 @@ def update_wiki_data(browser, status_data):
 
 def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     print "Updating the wiki page with the latest data..."
-    header = WikiWorkItem.join(
-        ["Spec", "Priority", "Work Item Description", "Status"])
+
+    def strip_html(html):
+        return re.sub(r'<[^>]*?>', '', html)
+
+    def color_priority(text):
+        if text == "Essential":
+            color = "FF6666"
+        elif text == "High":
+            color = "FF6633"
+        elif text == "Medium":
+            color = "FFFF66"
+        elif text == "Low":
+            color = "66FFFF"
+        return "<#%s> %s" % (color, text)
+
+    header = WikiWorkItem.join([
+        "'''Spec'''", "'''Priority'''", "'''Work Item Description'''",
+        "'''Status'''"])
     separator = WikiWorkItem.join(["<#999999>"] * 4)
     wiki_data = WikiData()
     wiki_data.add_line(header)
@@ -327,14 +348,11 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         if last_priority != None and priority != last_priority:
             wiki_data.add_line(separator)
         # Check to see if the work item was dropped or just postponed.
-        if result.is_dropped():
-            # Change the cell color to yellow if it was dropped.
-            status = "<#ffff00> %s" % DROPPED
-        else:
-            status = result.milestone
+        status = result.milestone or "<#ffff00> %s" % DROPPED
         work_item = WikiWorkItem(
             # XXX sanitize or convert html a-href's
-            result.spec, priority, result.description, status)
+            "UbuntuSpec:%s" % result.spec, color_priority(priority),
+            strip_html(result.description), status)
         wiki_data.add_line(work_item)
         last_priority = priority
     return wiki_data.render()
@@ -356,7 +374,10 @@ def replace_page_data(browser, database, trivial=False):
     if trivial:
         form.getControl(name="trivial").value = [True]
     # XXX use a passed parameter for date
-    status_data = get_status(database, u"2010-03-01")
+    # XXX use a passed parameter for milestone
+    status_data = get_status(
+        #database, date=u"2010-03-01", next_milestone=u"ubuntu-10.04-beta-1")
+        database, date=u"2010-03-01", next_milestone=u"lucid-alpha-3")
     data = get_new_wiki_data(browser, status_data)
     form.getControl(name="savetext").value = data
     form.submit(name="button_save")
