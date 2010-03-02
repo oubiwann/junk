@@ -7,7 +7,7 @@ with:
 """
 from zope.testbrowser.browser import Browser
 from storm.locals import (
-    DateTime, ReferenceSet, Store, Unicode, create_database)
+    DateTime, Reference, ReferenceSet, Store, Storm, Unicode, create_database)
 
 
 DONE = unicode("done")
@@ -24,17 +24,19 @@ class OptionsError(Exception):
     pass
 
 
-class WorkItem(object):
+class WorkItem(Storm):
     """
     The data model for the work items in the SQLite database.
     """
     __storm_table__ = "work_items"
+    __storm_primary__ = "spec", "description", "milestone", "date"
     description = Unicode()
     spec = Unicode()
     status = Unicode()
     assignee = Unicode()
     milestone = Unicode()
     date = DateTime()
+    blueprint = Reference(spec, "Blueprint.name")
 
     def is_dropped(self):
         if self.status == POSTPONED and self.milestone.strip():
@@ -42,7 +44,9 @@ class WorkItem(object):
         return True
 
 
-class Blueprint(object):
+
+
+class Blueprint(Storm):
     """
     The data model for the specs in the SQLite database.
     """
@@ -211,9 +215,12 @@ class WikiData(object):
         separator = WikiWorkItem.join(["<#999999>"]*4)
         self.line_objects.append(separator)
 
-    def add_raw_line(self, string):
-        raw_item = WikiRawLine(string)
-        self.line_objects.append(raw_item)
+    def add_raw_line(self, string_or_object):
+        if isinstance(string_or_object, basestring):
+            line_object = WikiRawLine(string_or_object)
+        else:
+            line_object = string_or_object
+        self.line_objects.append(line_object)
 
     @staticmethod
     def join(list_of_items):
@@ -270,13 +277,16 @@ def get_status(path):
     print "Getting work items status..."
     database = create_database("sqlite:%s" % path)
     store = Store(database)
-    results = store.find(WorkItem, WorkItem.status==POSTPONED)
+    results = store.find(
+        WorkItem,
+        WorkItem.status == POSTPONED,
+        WorkItem.spec == Blueprint.name)
     if results.count() == 0:
         import pdb;pdb.set_trace()
         raise ValueError("No matches found in the database.")
     # Order them by priority, blueprint name, and then description.
     results.order_by(
-        WorkItem.blueprint.priority, WorkItem.spec, WorkItem.description)
+        Blueprint.priority, WorkItem.spec, WorkItem.description)
     return results
 
 
@@ -286,8 +296,11 @@ def update_wiki_data(browser, status_data):
 
 def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     print "Updating the wiki page with the latest data..."
-    wiki_data = WikiData(prepend)
+    header = WikiWorkItem.join(
+        ["Spec", "Priority", "Work Item Description", "Status"])
     separator = WikiWorkItem.join(["<#999999>"]*4)
+    wiki_data = WikiData()
+    wiki_data.add_raw_line(header)
     # Get all postponed work items.
     last_priority = None
     for result in status_data:
@@ -321,8 +334,7 @@ def replace_page_data(browser, database, trivial=False):
         # XXX - update the checkbox with trival = True
         pass
     status_data = get_status(database)
-    data = get_new_wiki_data(
-        browser, status_data, prepend=wiki_data.header_line)
+    data = get_new_wiki_data(browser, status_data)
     form = browser.getForm("editor")
     form.getControl(name="savetext").value = data
     import pdb;pdb.set_trace()
