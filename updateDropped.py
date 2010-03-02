@@ -182,7 +182,7 @@ class WikiData(object):
         self.blueprints = {}
         self.has_blueprints = False
         if initial_row:
-            self.add_raw_line(initial_row)
+            self.add_line(initial_row)
         if form_data:
             self.parse(form_data)
 
@@ -220,7 +220,7 @@ class WikiData(object):
         separator = WikiWorkItem.join(["<#999999>"]*4)
         self.line_objects.append(separator)
 
-    def add_raw_line(self, string_or_object):
+    def add_line(self, string_or_object):
         if isinstance(string_or_object, basestring):
             line_object = WikiRawLine(string_or_object)
         else:
@@ -305,22 +305,27 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         ["Spec", "Priority", "Work Item Description", "Status"])
     separator = WikiWorkItem.join(["<#999999>"]*4)
     wiki_data = WikiData()
-    wiki_data.add_raw_line(header)
+    wiki_data.add_line(header)
     # Get all postponed work items.
     last_priority = None
     for result in status_data:
-        if result.is_dropped():
-            # Color last cell yellow, make contents "dropped"
-            status = "<#ffff00> %s" % DROPPED
-        else:
-            # Make contents the milestone
-            status = result.milestone
-        work_item = WikiWorkItem(
-            result.spec, result.blueprint.priority, result.description, status)
         # Check to see if the priority is the same; if so, just add the work
         # item; if it has changed, insert a separator and then add the work
         # item.
-    return wiki_data
+        priority = result.blueprint.priority
+        if last_priority != None and priority != last_priority:
+            wiki_data.add_line(separator)
+        # Check to see if the work item was dropped or just postponed.
+        if result.is_dropped():
+            # Change the cell color to yellow if it was dropped.
+            status = "<#ffff00> %s" % DROPPED
+        else:
+            status = result.milestone
+        work_item = WikiWorkItem(
+            result.spec, priority, result.description, status)
+        wiki_data.add_line(work_item)
+        last_priority = priority
+    return wiki_data.render()
 
 
 def update_page_data(browser, database):
@@ -330,26 +335,24 @@ def update_page_data(browser, database):
     wiki_data = get_wiki_data(data)
     status_data = get_correlated_status(wiki_data, database)
     update_wiki_data(browser, status_data)
-    form.submit(name="XXX")
+    form.submit(name="button_save")
 
 
 def replace_page_data(browser, database, trivial=False):
     browser.getLink("Edit").click()
+    form = browser.getForm("editor")
     if trivial:
-        # XXX - update the checkbox with trival = True
-        pass
+        form.getControl(name="trivial").value = [True]
     status_data = get_status(database)
     data = get_new_wiki_data(browser, status_data)
-    import pdb;pdb.set_trace()
-    form = browser.getForm("editor")
     form.getControl(name="savetext").value = data
-    form.submit(name="XXX")
+    form.submit(name="button_save")
 
 
 def main(username, password, database):
     browser = Browser(WIKI_PAGE)
     login(browser, username, password)
-    replace_page_data(browser, database)
+    replace_page_data(browser, database, trivial=True)
 
 
 if __name__ == "__main__":
@@ -360,6 +363,7 @@ if __name__ == "__main__":
         # - passing a wiki page
         # - last milestone
         # - next milestone
+        # - add support for trivial 
         main(*sys.argv[1:])
     except OptionsError:
         # Not enough parameters were passed
