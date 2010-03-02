@@ -320,9 +320,14 @@ def get_correlated_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
-def get_status(path, date=None, next_milestone=None):
-    print "Getting work items status..."
+def remove_old_milestones(work_items):
+    # XXX implement!
+    return work_items
 
+
+def sort_work_items(work_items):
+
+    # XXX may not need this now...
     def check_milestone(milestone):
         # If no milestone is set in the options, we want to include all
         # milestones; if one is set, we want to limit to the legal values.
@@ -333,22 +338,31 @@ def get_status(path, date=None, next_milestone=None):
             return True
         return False
 
+    results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
+                     for x in results if check_milestone(x.milestone)])
+    return [z for w, x, y, z in results]
+
+
+def get_status(path, date=None, next_milestone=None):
+    print "Getting work items status..."
+
     database = create_database("sqlite:%s" % path)
     store = Store(database)
     results = store.find(
         WorkItem,
         WorkItem.date == date,
-        WorkItem.status == POSTPONED,
         WorkItem.spec == Blueprint.name)
     if results.count() == 0:
         raise ValueError("No matches found in the database.")
     # Order them by priority, blueprint name, and then description. We're not
     # using Storm/SQL ordering here, because the values for priority don't sort
     # well.
-    results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
-                     for x in results if check_milestone(x.milestone)])
-    return [z for w, x, y, z in results]
+    filtered_results = []
+    for result in remove_old_milestones(results):
+        milestone = Milestone
+        filtered_results.append(result)
 
+    return sort_work_items(filtered_results)
 
 def update_wiki_data(browser, status_data):
     print "Modifiying wiki data with latest status info..."
