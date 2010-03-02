@@ -59,6 +59,12 @@ class Milestone(object):
         else:
             return 0
 
+    def __sub__(self, other):
+        return self.legal_values[abs(self.value - other)]    
+
+    def __add__(self, other):
+        return self.legal_values[self.value + other]    
+
 
 class WorkItem(Storm):
     """
