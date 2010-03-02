@@ -109,6 +109,8 @@ class Blueprint(Storm):
             return 3
         elif self.priority == "Low":
             return 4
+        elif self.priority in ["None", "Not", None, "Undefined"]:
+            return 5
 
 
 Blueprint.work_items = ReferenceSet(Blueprint.name, WorkItem.spec)
@@ -337,9 +339,9 @@ def sort_work_items(work_items):
         return False
 
     results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
-                     for x in results])
+                     for x in work_items])
                      #for x in results if check_milestone(x.milestone)])
-    return [z for w, x, y, z in results]
+    return [work_item for x, y, z, work_item in results]
 
 
 def get_status(path, date=None, next_milestone=None):
@@ -358,10 +360,12 @@ def get_status(path, date=None, next_milestone=None):
     # well.
     filtered_results = []
     for result in remove_old_milestones(results):
-        milestone = Milestone
+        if result.milestone:
+            milestone = Milestone(result.milestone)
         filtered_results.append(result)
 
     return sort_work_items(filtered_results)
+
 
 def update_wiki_data(browser, status_data):
     print "Modifiying wiki data with latest status info..."
@@ -383,6 +387,11 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
             color = "FFFF66"
         elif text == "Low":
             color = "66FFFF"
+        elif text in ["None", "Not", None, "Undefined"]:
+            color = "CCCCCC"
+        else:
+            print "\tHrm, found unknown priority: %s" % text
+            return text
         return "<#%s> %s" % (color, text)
 
     header = WikiWorkItem.join([
@@ -426,7 +435,7 @@ def replace_page_data(browser, options):
         form.getControl(name="trivial").value = [True]
     status_data = get_status(
         options.database, date=options.date, next_milestone=options.milestone)
-    data = get_new_wiki_data(browser, status_data)
+    data = get_new_wiki_data(browser, status_data).encode("utf-8")
     form.getControl(name="savetext").value = data
     form.submit(name="button_save")
 
