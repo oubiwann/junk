@@ -320,19 +320,32 @@ def get_correlated_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
-def remove_old_milestones(work_items):
+def remove_old_milestones(work_items, for_milestone):
+    print "\nRemoving old milestones from the result set..."
     # XXX implement!
-    return work_items
+    if not for_milestone:
+        return work_items
+    filtered = []
+    for_milestone = Milestone(for_milestone)
+    for work_item in work_items:
+        # If there's no milestone defined or if the milestone associated with
+        # the work item is greater than or equal to the one that we've asked
+        # about, we want to keep the work item for futher comparisons.
+        # Otherwise, we're not interested.
+        if (not work_item.milestone or 
+            Milestone(work_item.milestone) >= for_milestone):
+            filtered.append(work_item)
+    return filtered
 
 
 def sort_work_items(work_items):
-
+    print "\nSorting results..."
     # XXX may not need this now...
     def check_milestone(milestone):
         # If no milestone is set in the options, we want to include all
         # milestones; if one is set, we want to limit to the legal values.
-        legal_milestone_values = [next_milestone, None, u""]
-        if next_milestone == None:
+        legal_milestone_values = [for_milestone, None, u""]
+        if for_milestone == None:
             return True
         elif milestone in legal_milestone_values:
             return True
@@ -344,7 +357,7 @@ def sort_work_items(work_items):
     return [work_item for x, y, z, work_item in results]
 
 
-def get_status(path, date=None, next_milestone=None):
+def get_status(path, date=None, for_milestone=None):
     print "Getting work items status..."
 
     database = create_database("sqlite:%s" % path)
@@ -359,7 +372,7 @@ def get_status(path, date=None, next_milestone=None):
     # using Storm/SQL ordering here, because the values for priority don't sort
     # well.
     filtered_results = []
-    for result in remove_old_milestones(results):
+    for result in remove_old_milestones(results, for_milestone):
         if result.milestone:
             milestone = Milestone(result.milestone)
         filtered_results.append(result)
@@ -368,7 +381,6 @@ def get_status(path, date=None, next_milestone=None):
 
 
 def update_wiki_data(browser, status_data):
-    print "Modifiying wiki data with latest status info..."
     raise NotImplementedError
 
 
@@ -434,7 +446,7 @@ def replace_page_data(browser, options):
     if options.trivial:
         form.getControl(name="trivial").value = [True]
     status_data = get_status(
-        options.database, date=options.date, next_milestone=options.milestone)
+        options.database, date=options.date, for_milestone=options.milestone)
     data = get_new_wiki_data(browser, status_data).encode("utf-8")
     form.getControl(name="savetext").value = data
     form.submit(name="button_save")
@@ -462,6 +474,7 @@ if __name__ == "__main__":
         TYPE_CHECKER = copy(Option.TYPE_CHECKER)
         TYPE_CHECKER["unicode"] = check_unicode
 
+    # Make the defualt date, e.g., "SELECT MAX(date) FROM work_items"
     date = datetime.now().strftime("%Y-%m-%d")
     parser = OptionParser(usage=__doc__, option_class=CustomOption)
     parser.add_option(
