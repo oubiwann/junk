@@ -30,6 +30,44 @@ POSTPONED = u"postponed"
 DROPPED = u"dropped"
 
 
+class Milestone(object):
+    """
+    A convenience object that encapsulates milestone comparison logic.
+    """
+    def __init__(self, name):
+        self.name = name.lower()
+        self.value = self.get_value(self.name)
+
+    def __cmp__(self, other):
+        if self.value > other.value:
+            return 1
+        elif self.value < other.value:
+            return -1
+        else:
+            return 0
+
+    def get_value(self, name):
+        # Start at an arbitrary, high value so that we can insert others
+        # "below" that later. Also, leave room for insertions.
+        if name == "jaunty-updates":
+            value = 100
+        elif name == "lucid-alpha-1":
+            value = 200
+        elif name == "lucid-alpha-2":
+            value = 300
+        elif name == "lucid-alpha-3":
+            value = 400
+        elif name == "ubuntu-10.04-beta-1":
+            value = 500
+        elif name == "ubuntu-10.04-beta-2":
+            value = 600
+        elif name == "ubuntu-10.04":
+            value = 700
+        elif name == "later":
+            value = 800
+        return value
+
+
 class WorkItem(Storm):
     """
     The data model for the work items in the SQLite database.
