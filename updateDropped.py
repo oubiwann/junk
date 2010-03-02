@@ -11,7 +11,7 @@ An example usage:
 
     %prog -u you@canonical.com -p secret \\
         -d /home/you/Downloads/lucid.db \\
-        --url https://wiki.ubuntu.com/Oubiwann/TestPage3 \\
+        --url https://wiki.ubuntu.com/YourTestPage \\
         --trivial --date 2010-03-01 --milestone lucid-alpha-3
 
 Note that this script requires both storm and zope.testbrowser to be installed.
