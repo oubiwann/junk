@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 
 To use this script, you need to pass your Launchpad username (email address)
@@ -5,6 +6,15 @@ and password, as well as the full path to the SQLite database you are working
 with and the URL for the wiki page you wish to update:
 
     %prog [options]
+
+An example usage:
+
+    %prog -u you@canonical.com -p secret \\
+        -d /home/you/Downloads/lucid.db \\
+        --url https://wiki.ubuntu.com/Oubiwann/TestPage3 \\
+        --trivial --date 2010-03-01 --milestone lucid-alpha-3
+
+Note that this script requires both storm and zope.testbrowser to be installed.
 """
 import re
 
@@ -18,14 +28,6 @@ INPROGRESS = u"inprogress"
 TODO = u"todo"
 POSTPONED = u"postponed"
 DROPPED = u"dropped"
-
-WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage2"
-#WIKI_PAGE = "https://wiki.ubuntu.com/Oubiwann/TestPage"
-#WIKI_PAGE = "https://wiki.ubuntu.com/ReleaseTeam/FeatureStatus/Alpha3Postponed"
-
-
-class OptionsError(Exception):
-    pass
 
 
 class WorkItem(Storm):
@@ -41,16 +43,6 @@ class WorkItem(Storm):
     milestone = Unicode()
     date = Unicode()
     blueprint = Reference(spec, "Blueprint.name")
-
-    def is_dropped(self):
-        if self.milestone:
-            milestone = True
-            if not self.milestone.strip():
-                milestone = False
-        milestone = False
-        if self.status == POSTPONED and milestone:
-            return False
-        return True
 
 
 class Blueprint(Storm):
@@ -228,9 +220,9 @@ class WikiData(object):
         if not self.has_blueprint:
             self.has_blueprints = True
 
-    def add_separator(self, color="#999999"):
-        separator = WikiWorkItem.join(["<#999999>"]*4)
-        self.line_objects.append(separator)
+    def add_separator(self, color="999999"):
+        separator = WikiWorkItem.join(["<#%s>" % color] * 4)
+        self.add_line(separator)
 
     def add_line(self, string_or_object):
         if isinstance(string_or_object, basestring):
@@ -345,7 +337,6 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     header = WikiWorkItem.join([
         "'''Spec'''", "'''Priority'''", "'''Work Item Description'''",
         "'''Status'''"])
-    separator = WikiWorkItem.join(["<#999999>"] * 4)
     wiki_data = WikiData()
     wiki_data.add_line(header)
     # Get all postponed work items.
@@ -356,7 +347,7 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         # item.
         priority = result.blueprint.priority
         if last_priority != None and priority != last_priority:
-            wiki_data.add_line(separator)
+            wiki_data.add_separator()
         # Check to see if the work item was dropped or just postponed.
         status = result.milestone or "<#ffff00> %s" % DROPPED
         work_item = WikiWorkItem(
