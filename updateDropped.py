@@ -35,7 +35,7 @@ class Milestone(object):
     A convenience object that encapsulates milestone comparison logic.
     """
     # IMPORTANT!!! This needs to be maintained with every new milestone that
-    # makes it into the SQLite database. Util those values are put into a
+    # makes it into the SQLite database. Until those values are put into a
     # lookup table with a human-defined, explicit ordering, this has to be done
     # manually.
     legal_values = [
@@ -329,17 +329,6 @@ def get_wiki_data(form_data):
     return wiki_data
 
 
-def get_correlated_status(wiki_data, path):
-    blueprints = [x.id for x in wiki_data.get_blueprints()]
-    database = create_database("sqlite:%s" % path)
-    store = Store(database)
-    results = store.find(Blueprint, Blueprint.name.is_in(blueprints))
-    if results.count() == 0:
-        raise ValueError("No matches found in the database.")
-    # XXX We may want to munge status data differently here...
-    return [(x.name, x.implementation) for x in results]
-
-
 def get_postponed_work_items(database_path, date, for_milestone):
     print "\tGetting dropped work items for milestone %s..." % for_milestone
     database = create_database("sqlite:%s" % database_path)
@@ -394,20 +383,8 @@ def sort_work_items(work_items):
     well.
     """
     print "\tSorting results..."
-    # XXX may not need this now...
-    def check_milestone(milestone):
-        # If no milestone is set in the options, we want to include all
-        # milestones; if one is set, we want to limit to the legal values.
-        legal_milestone_values = [for_milestone, None, u""]
-        if for_milestone == None:
-            return True
-        elif milestone in legal_milestone_values:
-            return True
-        return False
-
     results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
                      for x in work_items])
-                     #for x in results if check_milestone(x.milestone)])
     return [work_item for x, y, z, work_item in results]
 
 
@@ -438,10 +415,6 @@ def get_dropped_and_postponed(database_path, date=None, for_milestone=None):
             work_item.is_dropped = True
             dropped.append(work_item)
     return (dropped, postponed)
-
-
-def update_wiki_data(browser, status_data):
-    raise NotImplementedError
 
 
 def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
@@ -491,16 +464,6 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
         wiki_data.add_line(work_item_object)
         last_priority = priority
     return wiki_data.render()
-
-
-def update_page_data(browser, database):
-    browser.getLink("Edit").click()
-    form = browser.getForm("editor")
-    data = form.getControl(name="savetext").value
-    wiki_data = get_wiki_data(data)
-    status_data = get_correlated_status(wiki_data, database)
-    update_wiki_data(browser, status_data)
-    form.submit(name="button_save")
 
 
 def get_stats(data):
@@ -576,7 +539,7 @@ if __name__ == "__main__":
         TYPE_CHECKER = copy(Option.TYPE_CHECKER)
         TYPE_CHECKER["unicode"] = check_unicode
 
-    # Make the defualt date, e.g., "SELECT MAX(date) FROM work_items"
+    # XXX Make the defualt date, e.g., "SELECT MAX(date) FROM work_items"
     date = datetime.now().strftime("%Y-%m-%d")
     parser = OptionParser(usage=__doc__, option_class=CustomOption)
     parser.add_option(
