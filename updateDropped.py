@@ -29,6 +29,13 @@ TODO = u"todo"
 POSTPONED = u"postponed"
 DROPPED = u"dropped"
 
+COLOR_ESSENTIAL = "#FF6666"
+COLOR_HIGH = "#FF9966"
+COLOR_MEDIUM = "#FFFF66"
+COLOR_LOW = "#66FFFF"
+COLOR_UNDEFINED = "#CCCCCC"
+COLOR_WHITE = "#FFFFFF"
+
 
 class Milestone(object):
     """
@@ -278,8 +285,8 @@ class WikiData(object):
         if not self.has_blueprint:
             self.has_blueprints = True
 
-    def add_separator(self, color="999999"):
-        separator = WikiWorkItem.join(["<#%s>" % color] * 4)
+    def add_separator(self, color="#999999"):
+        separator = WikiWorkItem.join(["<%s>" % color] * 4)
         self.add_line(separator)
 
     def add_line(self, string_or_object):
@@ -425,19 +432,19 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
 
     def color_priority(text):
         if text == "Essential":
-            color = "FF6666"
+            color = COLOR_ESSENTIAL
         elif text == "High":
-            color = "FF9966"
+            color = COLOR_HIGH
         elif text == "Medium":
-            color = "FFFF66"
+            color = COLOR_MEDIUM
         elif text == "Low":
-            color = "66FFFF"
+            color = COLOR_LOW
         elif text in ["None", "Not", None, "Undefined"]:
-            color = "CCCCCC"
+            color = COLOR_UNDEFINED
         else:
             print "\tHrm, found unknown priority: %s" % text
             return text
-        return "<#%s> %s" % (color, text)
+        return "<%s> %s" % (color, text)
 
     header = WikiWorkItem.join([
         "'''Spec'''", "'''Priority'''", "'''Work Item Description'''",
@@ -484,18 +491,26 @@ def get_stats(data):
 
 def make_summary(dropped, postponed):
     print "\tGenerating summary..."
+    colors = (COLOR_ESSENTIAL, COLOR_HIGH, COLOR_MEDIUM, COLOR_LOW, COLOR_WHITE)
     postponed_stats = get_stats(postponed)
     dropped_stats = get_stats(dropped)
+    summed_stats = map(sum, zip(postponed_stats, dropped_stats))
+    postponed_colors = map(
+        lambda x:"<%s>%s" % (x[1], x[0]), zip(postponed_stats, colors))
+    dropped_colors = map(
+        lambda x:"<%s>%s" % (x[1], x[0]), zip(dropped_stats, colors))
+    summed_colors = map(
+        lambda x:"<%s>%s" % (x[1], x[0]), zip(summed_stats, colors))
     summary_data = WikiData()
     summary_data.add_line(WikiRow(
         " ", "'''Essential Priority'''", "'''High Priority'''",
         "'''Medium Priority'''", "'''Low Priority'''", "'''Total Items'''"))
     summary_data.add_line(WikiRow(
-        "Postponed Tasks", *postponed_stats))
+        "Postponed Tasks", *postponed_colors))
     summary_data.add_line(WikiRow(
-        "Dropped Tasks", *dropped_stats))
+        "Dropped Tasks", *dropped_colors))
     summary_data.add_line(WikiRow(
-        "'''Total Tasks'''", *map(sum, zip(postponed_stats, dropped_stats))))
+        "'''Total Tasks'''", *summed_colors))
     data = "== Stats Summary ==%s" % WikiData.split_on
     data += summary_data.render()
     data += "%s== Postponed and Dropped Work Items  ==%s" % (
