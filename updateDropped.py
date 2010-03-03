@@ -137,7 +137,25 @@ class WikiRawLine(object):
         return self.line
 
 
-class WikiWorkItem(WikiRawLine):
+class WikiRow(WikiRawLine):
+    """
+    A convenience object for creating general moin moin table rows.
+    """
+    def __init__(self, *cells):
+        self.cells = [unicode(x) for x in cells]
+
+    @staticmethod
+    def join(list_of_items):
+        return "%s%s%s" % (
+            WikiWorkItem.split_on,
+            WikiWorkItem.split_on.join(list_of_items),
+            WikiWorkItem.split_on)
+
+    def render(self):
+        return self.join(self.cells)
+
+
+class WikiWorkItem(WikiRow):
     """
     A convenience object for storing and accessing work item data from the wiki
     page.
@@ -154,6 +172,7 @@ class WikiWorkItem(WikiRawLine):
         self.headers = None
 
     def parse(self, header_line, data_line):
+        self.header_line = header_line
         self.headers = self.extract_headers(self.header_line)
         self.set_attributes(data_line)
 
@@ -191,13 +210,6 @@ class WikiWorkItem(WikiRawLine):
         for header, data in zip(self.headers, splits):
             index, header_name, attr = header
             setattr(self, attr, unicode(data))
-
-    @staticmethod
-    def join(list_of_items):
-        return "%s%s%s" % (
-            WikiWorkItem.split_on,
-            WikiWorkItem.split_on.join(list_of_items),
-            WikiWorkItem.split_on)
 
     def render(self):
         data = [self.spec, self.priority, self.description, self.status]
@@ -343,6 +355,21 @@ def get_postponed_work_items(database_path, date, for_milestone):
     return results
 
 
+def get_future_work_items_lookup(
+    database_path, date, for_milestone, descriptions):
+    print "\tGetting lookup for future work items..."
+    future_milestones = Milestone.get_future_milestones(for_milestone)
+    database = create_database("sqlite:%s" % database_path)
+    store = Store(database)
+    future_work_items = store.find(
+        WorkItem,
+        WorkItem.date == date,
+        WorkItem.description.is_in(descriptions),
+        WorkItem.milestone.is_in(future_milestones),
+        WorkItem.spec == Blueprint.name)
+    return dict([(x.description, x) for x in future_work_items])
+
+
 def remove_old_milestones(work_items, for_milestone):
     print "\tRemoving old milestones from the result set..."
     if not for_milestone:
@@ -396,21 +423,11 @@ def get_dropped_and_postponed(database_path, date=None, for_milestone=None):
            milestone as the status.
     """
     print "Getting postponed and dropped work items..."
-
     current_work_items = get_postponed_work_items(
         database_path, date, for_milestone)
     descriptions = [x.description for x in current_work_items]
-    future_milestones = Milestone.get_future_milestones(for_milestone)
-    # XXX maybe move this next bit into its own function
-    database = create_database("sqlite:%s" % database_path)
-    store = Store(database)
-    future_work_items = store.find(
-        WorkItem,
-        WorkItem.date == date,
-        WorkItem.description.is_in(descriptions),
-        WorkItem.milestone.is_in(future_milestones),
-        WorkItem.spec == Blueprint.name)
-    future_lookup = dict([(x.description, x) for x in future_work_items])
+    future_lookup = get_future_work_items_lookup(
+        database_path, date, for_milestone, descriptions)
     postponed = []
     dropped = []
     for work_item in current_work_items:
@@ -420,7 +437,7 @@ def get_dropped_and_postponed(database_path, date=None, for_milestone=None):
         else:
             work_item.is_dropped = True
             dropped.append(work_item)
-    return sort_work_items(postponed + dropped)
+    return (dropped, postponed)
 
 
 def update_wiki_data(browser, status_data):
@@ -486,14 +503,52 @@ def update_page_data(browser, database):
     form.submit(name="button_save")
 
 
+def get_stats(data):
+    essential, high, medium, low = (0, 0, 0, 0)
+    total = len(data)
+    for datum in data:
+        priority = datum.blueprint.priority
+        if priority == "Essential":
+            essential += 1
+        elif priority == "High":
+            high += 1
+        elif priority == "Medium":
+            medium += 1
+        elif priority == "Low":
+            low += 1
+    return (essential, high, medium, low, total)
+
+
+def make_summary(dropped, postponed):
+    print "\tGenerating summary..."
+    postponed_stats = get_stats(postponed)
+    dropped_stats = get_stats(dropped)
+    summary_data = WikiData()
+    summary_data.add_line(WikiRow(
+        " ", "'''Essential Priority'''", "'''High Priority'''",
+        "'''Medium Priority'''", "'''Low Priority'''", "'''Total Items'''"))
+    summary_data.add_line(WikiRow(
+        "Postponed Tasks", *postponed_stats))
+    summary_data.add_line(WikiRow(
+        "Dropped Tasks", *dropped_stats))
+    summary_data.add_line(WikiRow(
+        "'''Total Tasks'''", *map(sum, zip(postponed_stats, dropped_stats))))
+    data = "== Stats Summary ==%s" % WikiData.split_on
+    data += summary_data.render()
+    data += "%s== Postponed and Dropped Work Items  ==%s" % (
+        WikiData.split_on, WikiData.split_on)
+    return data
+
 def replace_page_data(browser, options):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
     if options.trivial:
         form.getControl(name="trivial").value = [True]
-    status_data = get_dropped_and_postponed(
+    dropped, postponed = get_dropped_and_postponed(
         options.database, date=options.date, for_milestone=options.milestone)
-    data = get_new_wiki_data(browser, status_data).encode("utf-8")
+    status_data = sort_work_items(postponed + dropped)
+    data = make_summary(dropped, postponed)
+    data += get_new_wiki_data(browser, status_data).encode("utf-8")
     form.getControl(name="savetext").value = data
     form.submit(name="button_save")
 
@@ -502,6 +557,7 @@ def main(options):
     browser = Browser(options.url)
     login(browser, options.username, options.password)
     replace_page_data(browser, options)
+    print "Operation complete."
 
 
 if __name__ == "__main__":
