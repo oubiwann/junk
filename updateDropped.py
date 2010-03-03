@@ -35,16 +35,18 @@ class Milestone(object):
     A convenience object that encapsulates milestone comparison logic.
     """
     # IMPORTANT!!! This needs to be maintained with every new milestone that
-    # makes it into the SQLite database!
+    # makes it into the SQLite database. Util those values are put into a
+    # lookup table with a human-defined, explicit ordering, this has to be done
+    # manually.
     legal_values = [
-        "jaunty-updates",
-        "lucid-alpha-1",
-        "lucid-alpha-2",
-        "lucid-alpha-3",
-        "ubuntu-10.04-beta-1",
-        "ubuntu-10.04-beta-2",
-        "ubuntu-10.04",
-        "later",
+        u"jaunty-updates",
+        u"lucid-alpha-1",
+        u"lucid-alpha-2",
+        u"lucid-alpha-3",
+        u"ubuntu-10.04-beta-1",
+        u"ubuntu-10.04-beta-2",
+        u"ubuntu-10.04",
+        u"later",
         ]
 
     def __init__(self, name):
@@ -65,6 +67,11 @@ class Milestone(object):
     def __add__(self, other):
         return self.legal_values[self.value + other]    
 
+    @staticmethod
+    def get_future_milestones(name):
+        past_milestone = Milestone(name)
+        return Milestone.legal_values[(past_milestone.value + 1):]
+
 
 class WorkItem(Storm):
     """
@@ -79,6 +86,7 @@ class WorkItem(Storm):
     milestone = Unicode()
     date = Unicode()
     blueprint = Reference(spec, "Blueprint.name")
+    is_dropped = False
 
 
 class Blueprint(Storm):
@@ -320,9 +328,23 @@ def get_correlated_status(wiki_data, path):
     return [(x.name, x.implementation) for x in results]
 
 
+def get_postponed_work_items(database_path, date, for_milestone):
+    print "\tGetting dropped work items for milestone %s..." % for_milestone
+    database = create_database("sqlite:%s" % database_path)
+    store = Store(database)
+    results = store.find(
+        WorkItem,
+        WorkItem.date == date,
+        WorkItem.milestone == for_milestone,
+        WorkItem.status == POSTPONED,
+        WorkItem.spec == Blueprint.name)
+    if results.count() == 0:
+        raise ValueError("No matches found in the database.")
+    return results
+
+
 def remove_old_milestones(work_items, for_milestone):
-    print "\nRemoving old milestones from the result set..."
-    # XXX implement!
+    print "\tRemoving old milestones from the result set..."
     if not for_milestone:
         return work_items
     filtered = []
@@ -339,7 +361,12 @@ def remove_old_milestones(work_items, for_milestone):
 
 
 def sort_work_items(work_items):
-    print "\nSorting results..."
+    """
+    Order them by priority, blueprint name, and then description. We're not
+    using Storm/SQL ordering here, because the values for priority don't sort
+    well.
+    """
+    print "\tSorting results..."
     # XXX may not need this now...
     def check_milestone(milestone):
         # If no milestone is set in the options, we want to include all
@@ -357,27 +384,43 @@ def sort_work_items(work_items):
     return [work_item for x, y, z, work_item in results]
 
 
-def get_status(path, date=None, for_milestone=None):
-    print "Getting work items status..."
+def get_dropped_and_postponed(database_path, date=None, for_milestone=None):
+    """
+    To get the status of the work items, several things need to happend:
 
-    database = create_database("sqlite:%s" % path)
+        1) get a list of work items that are defined for the given milestone;
+        2) get a list of these same work items for all future milestones;
+        3) set the status to dropped if a work items has no identical item
+           (description) in a future milestone;
+        4) otherwise, set the status to postponed using the future-most
+           milestone as the status.
+    """
+    print "Getting postponed and dropped work items..."
+
+    current_work_items = get_postponed_work_items(
+        database_path, date, for_milestone)
+    descriptions = [x.description for x in current_work_items]
+    future_milestones = Milestone.get_future_milestones(for_milestone)
+    # XXX maybe move this next bit into its own function
+    database = create_database("sqlite:%s" % database_path)
     store = Store(database)
-    results = store.find(
+    future_work_items = store.find(
         WorkItem,
         WorkItem.date == date,
+        WorkItem.description.is_in(descriptions),
+        WorkItem.milestone.is_in(future_milestones),
         WorkItem.spec == Blueprint.name)
-    if results.count() == 0:
-        raise ValueError("No matches found in the database.")
-    # Order them by priority, blueprint name, and then description. We're not
-    # using Storm/SQL ordering here, because the values for priority don't sort
-    # well.
-    filtered_results = []
-    for result in remove_old_milestones(results, for_milestone):
-        if result.milestone:
-            milestone = Milestone(result.milestone)
-        filtered_results.append(result)
-
-    return sort_work_items(filtered_results)
+    future_lookup = dict([(x.description, x) for x in future_work_items])
+    postponed = []
+    dropped = []
+    for work_item in current_work_items:
+        if work_item.description in future_lookup.keys():
+            future_work_item = future_lookup.get(work_item.description)
+            postponed.append(future_work_item)
+        else:
+            work_item.is_dropped = True
+            dropped.append(work_item)
+    return sort_work_items(postponed + dropped)
 
 
 def update_wiki_data(browser, status_data):
@@ -413,19 +456,22 @@ def get_new_wiki_data(browser, status_data, prepend="", postpend=""):
     wiki_data.add_line(header)
     # Get all postponed work items.
     last_priority = None
-    for result in status_data:
+    for work_item in status_data:
         # Check to see if the priority is the same; if so, just add the work
         # item; if it has changed, insert a separator and then add the work
         # item.
-        priority = result.blueprint.priority
+        priority = work_item.blueprint.priority
         if last_priority != None and priority != last_priority:
             wiki_data.add_separator()
         # Check to see if the work item was dropped or just postponed.
-        status = result.milestone or "<#ffff00> %s" % DROPPED
-        work_item = WikiWorkItem(
-            "UbuntuSpec:%s" % result.spec, color_priority(priority),
-            strip_html(result.description), status)
-        wiki_data.add_line(work_item)
+        if work_item.is_dropped:
+            status = "<#ffff00> %s" % DROPPED
+        else:
+            status = work_item.milestone
+        work_item_object = WikiWorkItem(
+            "UbuntuSpec:%s" % work_item.spec, color_priority(priority),
+            strip_html(work_item.description), status)
+        wiki_data.add_line(work_item_object)
         last_priority = priority
     return wiki_data.render()
 
@@ -445,7 +491,7 @@ def replace_page_data(browser, options):
     form = browser.getForm("editor")
     if options.trivial:
         form.getControl(name="trivial").value = [True]
-    status_data = get_status(
+    status_data = get_dropped_and_postponed(
         options.database, date=options.date, for_milestone=options.milestone)
     data = get_new_wiki_data(browser, status_data).encode("utf-8")
     form.getControl(name="savetext").value = data
