@@ -398,10 +398,11 @@ def sort_work_items(work_items):
 def get_dropped_and_postponed(database_path, date=None, for_milestone=None):
     """
     To get the status of the work items, several things need to happend:
-
-        1) get a list of work items that are defined for the given milestone;
-        2) get a list of these same work items for all future milestones;
-        3) set the status to dropped if a work items has no identical item
+        1) get a list of work items that are defined for the given milestone
+           and which have status set to "postponed";
+        2) get a list of work items for all future milestones, regardless of
+           status;
+        3) set the status to dropped if a work item has no identical item
            (description) in a future milestone;
         4) otherwise, set the status to postponed using the future-most
            milestone as the status.
