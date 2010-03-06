@@ -385,9 +385,9 @@ def remove_old_milestones(work_items, for_milestone):
 
 def sort_work_items(work_items):
     """
-    Order them by priority, blueprint name, and then description. We're not
-    using Storm/SQL ordering here, because the values for priority don't sort
-    well.
+    Order the work items by priority, blueprint name, and then description.
+    We're not using Storm/SQL ordering here, because the values for priority
+    don't sort well.
     """
     print "\tSorting results..."
     results = sorted([(x.blueprint.numeric_priority, x.spec, x.description, x)
@@ -517,6 +517,7 @@ def make_summary(dropped, postponed):
     data += "%s== Postponed and Dropped Work Items  ==%s" % (
         WikiData.split_on, WikiData.split_on)
     return data
+
 
 def replace_page_data(browser, options):
     browser.getLink("Edit").click()
