@@ -39,7 +39,7 @@ COLOR_LOW = "#66FFFF"
 COLOR_UNDEFINED = "#CCCCCC"
 COLOR_WHITE = "#FFFFFF"
 
-AGENT_STRING = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_8; en-US) AppleWebKit/532.5 (KHTML, like Gecko) Chrome/4.0.249.49 Safari/532.5"
+AGENT_STRING = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.3) Gecko/20100404 Ubuntu/10.04 (lucid) Firefox/3.6.3"
 
 
 class Milestone(object):
