@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Parameters.
 PASSWORD=$1
 
@@ -14,11 +16,18 @@ BASE_DIR="/Users/oubiwann/lab/platform-scripts"
 DB_SOURCE="http://people.canonical.com/~pitti/workitems"
 DB_NAME="lucid.db"
 
+function abort() {
+    MSG=$1
+    echo $MSG
+    echo "Exiting ..."
+    echo
+    exit 1
+}
+
 # Parameter check.
 if [[ -z $PASSWORD ]]; then
-    echo "No Launchpad password supplied."
-    echo "Exiting..."
-    exit 1
+    echo
+    abort "No Launchpad password supplied."
 fi
 
 # Remove the old database and get the new one.
