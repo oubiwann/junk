@@ -328,9 +328,11 @@ def login(browser, username, password):
     # Third stage
     print "\tSending launchpad credentials..."
     form = browser.getForm()
-    form.getControl(name="field.email").value = username
-    form.getControl(name="field.password").value = password
-    form.submit(name="field.actions.continue")
+    form.getControl(name="email").value = username
+    form.getControl(name="password").value = password
+    form.submit(name="continue")
+    # Fourth state (confirm SSO)
+    browser.getForm().getControl(name="yes").click()
 
 
 def get_wiki_data(form_data):
