@@ -30,6 +30,27 @@ if [[ -z $PASSWORD ]]; then
     abort "No Launchpad password supplied."
 fi
 
+# Dependencies check.
+python -c "from zope.testbrowser.browser import Browser;" &> /dev/null
+RESULT=$?
+if [[ $RESULT -gt 0 ]]; then
+    echo
+    echo "Zope TestBrowser doesn't seem to be installed."
+    echo "You need to do the following before running this script:"
+    echo
+    abort "sudo apt-get install python-zope.testbrowser"
+fi
+
+python -c "from storm.locals import Storm;" &> /dev/null
+RESULT=$?
+if [[ $RESULT -gt 0 ]]; then
+    echo
+    echo "The Storm ORM doesn't seem to be installed."
+    echo "You need to do the following before running this script:"
+    echo
+    abort "sudo easy_install storm"
+fi
+
 # Remove the old database and get the new one.
 rm lucid.db
 wget ${DB_SOURCE}/${DB_NAME}
