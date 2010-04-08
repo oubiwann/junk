@@ -18,7 +18,10 @@ Note that this script requires both storm and zope.testbrowser to be installed.
 """
 import re
 
+import mechanize
+
 from zope.testbrowser.browser import Browser
+
 from storm.locals import (
     DateTime, Reference, ReferenceSet, Store, Storm, Unicode, create_database)
 
@@ -35,6 +38,8 @@ COLOR_MEDIUM = "#FFFF66"
 COLOR_LOW = "#66FFFF"
 COLOR_UNDEFINED = "#CCCCCC"
 COLOR_WHITE = "#FFFFFF"
+
+AGENT_STRING = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_8; en-US) AppleWebKit/532.5 (KHTML, like Gecko) Chrome/4.0.249.49 Safari/532.5"
 
 
 class Milestone(object):
@@ -534,7 +539,10 @@ def replace_page_data(browser, options):
 
 
 def main(options):
-    browser = Browser(options.url)
+    mech_browser = mechanize.Browser()
+    mech_browser.addheaders = [("User-agent", AGENT_STRING)]
+    mech_browser.set_handle_robots(None)
+    browser = Browser(options.url, mech_browser=mech_browser)
     login(browser, options.username, options.password)
     replace_page_data(browser, options)
     print "Operation complete."
