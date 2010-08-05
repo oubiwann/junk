@@ -3,7 +3,8 @@
 
 To use this script, you need to pass your Launchpad username (email address)
 and password, as well as the full path to the SQLite database you are working
-with and the URL for the wiki page you wish to update:
+with and the URL for the wiki page you wish to update. The milestone option
+should be the value for the milestone just-entered, the current one:
 
     %prog [options]
 
@@ -58,6 +59,13 @@ class Milestone(object):
         u"ubuntu-10.04-beta-1",
         u"ubuntu-10.04-beta-2",
         u"ubuntu-10.04",
+        u"lucid-updates",
+        u"maverick-alpha-1",
+        u"maverick-alpha-2",
+        u"maverick-alpha-3",
+        u"maverick-10.10-beta-1",
+        u"maverick-10.10-beta-2",
+        u"maverick-10.10",
         u"later",
         ]
 
@@ -360,7 +368,8 @@ def get_postponed_work_items(database_path, date, for_milestone):
 
 def get_future_work_items_lookup(
     database_path, date, for_milestone, descriptions):
-    print "\tGetting lookup for future work items..."
+    print "\tGetting lookup for future work items (checking against %s)..." % (
+        for_milestone)
     future_milestones = Milestone.get_future_milestones(for_milestone)
     database = create_database("sqlite:%s" % database_path)
     store = Store(database)
@@ -526,14 +535,18 @@ def make_summary(dropped, postponed):
     return data
 
 
-def replace_page_data(browser, options):
+def get_page_data(options):
+    dropped, postponed = get_dropped_and_postponed(
+        options.database, date=options.date, for_milestone=options.milestone)
+    status_data = sort_work_items(postponed + dropped)
+    return (dropped, postponed, status_data)
+
+
+def replace_page_data(browser, options, dropped, postponed, status_data):
     browser.getLink("Edit").click()
     form = browser.getForm("editor")
     if options.trivial:
         form.getControl(name="trivial").value = [True]
-    dropped, postponed = get_dropped_and_postponed(
-        options.database, date=options.date, for_milestone=options.milestone)
-    status_data = sort_work_items(postponed + dropped)
     data = make_summary(dropped, postponed)
     data += get_new_wiki_data(browser, status_data).encode("utf-8")
     form.getControl(name="savetext").value = data
@@ -541,12 +554,15 @@ def replace_page_data(browser, options):
 
 
 def main(options):
+    # get the data first, that's the quickest op
+    dropped, postponed, status_data = get_page_data(options)
+    # then mess with openid and the wiki
     mech_browser = mechanize.Browser()
     mech_browser.addheaders = [("User-agent", AGENT_STRING)]
     mech_browser.set_handle_robots(None)
     browser = Browser(options.url, mech_browser=mech_browser)
     login(browser, options.username, options.password)
-    replace_page_data(browser, options)
+    replace_page_data(browser, options, dropped, postponed, status_data)
     print "Operation complete."
 
 

@@ -5,16 +5,17 @@ PASSWORD=$1
 
 # Configuration.
 USER="duncan@ubuntu.com"
-DATE="2010-04-08"
-MILESTONE="ubuntu-10.04-beta-2"
-REAL_PAGE="ReleaseTeam/FeatureStatus/Ubuntu10.04Beta2Postponed"
+DATE="2010-08-05"
+MILESTONE="maverick-alpha-3"
+REAL_PAGE="ReleaseTeam/FeatureStatus/MaverickAlpha3Postponed"
+#REAL_PAGE="ReleaseTeam/FeatureStatus/Ubuntu10.10Beta1Postponed"
 
 TEST_PAGE="Oubiwann/TestPage"
 BASE_WIKI="https://wiki.ubuntu.com"
-BASE_DIR="/Users/oubiwann/lab/platform-scripts"
-#BASE_DIR="/home/oubiwann/lab/platform-scripts"
-DB_SOURCE="http://people.canonical.com/~pitti/workitems"
-DB_NAME="lucid.db"
+#BASE_DIR="/Users/oubiwann/lab/platform-scripts"
+BASE_DIR="/home/oubiwann/lab/platform-scripts"
+DB_SOURCE="http://people.canonical.com/~pitti/workitems/maverick"
+DB_NAME="maverick.db"
 
 function abort() {
     MSG=$1
@@ -52,7 +53,7 @@ if [[ $RESULT -gt 0 ]]; then
 fi
 
 # Remove the old database and get the new one.
-rm lucid.db
+rm $DB_NAME
 wget ${DB_SOURCE}/${DB_NAME}
 
 # Perform a dry-run, updating a test page.
