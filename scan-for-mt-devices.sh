@@ -35,7 +35,12 @@ for d in event*; do
     done
     has_mt=${mask[0x35]}
     # XXX debugging...
-    echo $dev $name $abs $hex $has_mt
+    echo "device: $dev"
+    echo "name: $name"
+    echo "abs: $abs"
+    echo "hex: $hex"
+    echo $mask $has_mt
+    echo
     if [ $has_mt = 1 ]; then
         if [ "X$dev_detected" = "X" ]; then
             dev_detected = 1
