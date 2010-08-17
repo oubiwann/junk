@@ -2,6 +2,9 @@
 #
 # This script reports the MT-capable devices present in your system
 #
+
+pushd . > /dev/null
+
 cd /sys/class/input
 typeset -i nbit=64
 typeset -i nhex=$nbit/4
@@ -32,6 +35,15 @@ for d in event*; do
     done
     has_mt=${mask[0x35]}
     if [ $has_mt = 1 ]; then
+	if [ "X$dev_detected" = "X" ]; then
+		dev_detected = 1
+		echo "Found device(s):" >&2
+	fi
 	echo $name: $dev
     fi
 done
+if [ "X$dev_detected" = "X" ]; then
+	echo "No MT-capable device found..." >&2
+fi
+
+popd > /dev/null
