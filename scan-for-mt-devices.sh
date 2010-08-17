@@ -16,29 +16,31 @@ for d in event*; do
     hex=`printf %${nhex}s $abs`
     typeset -i i=0
     while [ $i -lt $nhex ]; do
-    typeset -i word=$nhex-1-$i
-    valS=${hex:$word:1}
-    val10=$[0x$valS]
-    if [ "X$val10" = "X" ]; then
-        valBS="0000"
-    else
-        valBS=`echo "ibase=10; obase=2; $val10" | bc`
-    fi
-    valB=`printf %4s "$valBS"`
-    typeset -i j=0
-    while [ $j -lt 4 ]; do
-        typeset -i bit=4*$i+$j
-        typeset -i mask[$bit]=${valB:$j:1}
-        j=$j+1
-    done
-    i=$i+1
+        typeset -i word=$nhex-1-$i
+        valS=${hex:$word:1}
+        val10=$[0x$valS]
+        if [ "X$val10" = "X" ]; then
+            valBS="0000"
+        else
+            valBS=`echo "ibase=10; obase=2; $val10" | bc`
+        fi
+        valB=`printf %4s "$valBS"`
+        typeset -i j=0
+        while [ $j -lt 4 ]; do
+            typeset -i bit=4*$i+$j
+            typeset -i mask[$bit]=${valB:$j:1}
+            j=$j+1
+        done
+        i=$i+1
     done
     has_mt=${mask[0x35]}
+    # XXX debugging...
+    echo $dev $name $abs $hex $has_mt
     if [ $has_mt = 1 ]; then
-    if [ "X$dev_detected" = "X" ]; then
-        dev_detected = 1
-        echo "Found device(s):" >&2
-    fi
+        if [ "X$dev_detected" = "X" ]; then
+            dev_detected = 1
+            echo "Found device(s):" >&2
+        fi
     echo $name: $dev
     fi
 done
