@@ -1,2 +1,2 @@
-int THING_ONE = 1;
-int THING_TWO = 2;
+#define THING_ONE 1
+#define THING_TWO 2
