@@ -26,22 +26,15 @@ static void MyThing_dealloc(MyThingObject *self) {
     PyObject_Del(self);
 }
 
-static PyObject * MyThing_get_thing_one(MyThingObject *self, PyObject *args) {
+static PyObject * MyThing_get_thing_one(MyThingObject *self) {
     int result = get_thing_one();
     return Py_BuildValue("i", result);
 }
 
-PyObject * MyThing_get_thing_two(PyObject *self) {
+static PyObject * MyThing_get_thing_two(MyThingObject *self) {
     int result = get_thing_two();
     return Py_BuildValue("i", result);
 }
-
-static PyMethodDef MyThing_methods[] = {
-    {"get_thing_one", (PyCFunction)MyThing_get_thing_one, METH_VARARGS,
-     PyDoc_STR("get_thing_one() -> 1")},
-    {"get_thing_two", (PyCFunction)MyThing_get_thing_two, METH_VARARGS},
-    {NULL, NULL},
-};
 
 static PyObject * MyThing_getattr(MyThingObject *self, char *name) {
     if (self->x_attr != NULL) {
@@ -70,6 +63,13 @@ static int MyThing_setattr(MyThingObject *self, char *name, PyObject *v) {
     else
         return PyDict_SetItemString(self->x_attr, name, v);
 }
+
+static PyMethodDef MyThing_methods[] = {
+    {"get_thing_one", (PyCFunction)MyThing_get_thing_one, METH_VARARGS,
+     PyDoc_STR("get_thing_one() -> 1")},
+    {"get_thing_two", (PyCFunction)MyThing_get_thing_two, METH_VARARGS},
+    {NULL, NULL},
+};
 
 static PyTypeObject MyThing_type = {
     /* The ob_type field must be initialized in the module init function
