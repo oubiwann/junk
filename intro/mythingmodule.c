@@ -19,7 +19,8 @@ static IntConstantPair _constants[] = {
     {(char*)NULL, 0}
 };
 
-void initmything()
+PyMODINIT_FUNC
+initmything(void)
 {
     PyObject *module, *dict;
     module = Py_InitModule("mything", methods);
