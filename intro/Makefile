@@ -11,7 +11,7 @@ run-extension: extension
 	python example.py
 
 test-interpreter:
-	cd build/lib.linux-i686-2.6 && python -m mything.so -i
+	cd build/lib.linux-i686-2.6 && python
 
 clean:
 	rm -rf build
