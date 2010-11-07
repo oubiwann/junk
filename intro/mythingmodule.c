@@ -226,7 +226,7 @@ static IntConstantPair _constants[] = {
 
 PyMODINIT_FUNC
 initmything(void) {
-    PyObject *module, *dict, *tmp_obj;
+    PyObject *module, *dict;
     module = Py_InitModule("mything", MyThing_methods);
     dict = PyModule_GetDict(module);
 
@@ -245,8 +245,8 @@ initmything(void) {
     /* Set integer constants */
     int i;
     for (i = 0; _constants[i].constant_name != 0; i++) {
-        tmp_obj = Py_BuildValue("i", _constants[i].constant_value);
-        PyDict_SetItemString(dict, _constants[i].constant_name, tmp_obj);
-        Py_DECREF(tmp_obj);
+        PyModule_AddIntConstant(module,
+                                _constants[i].constant_name,
+                                _constants[i].constant_value);
     }
 }
