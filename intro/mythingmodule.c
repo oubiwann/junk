@@ -27,7 +27,7 @@ PyObject * MyThing_get_thing_two(PyObject *self) {
     return Py_BuildValue("i", result);
 }
 
-PyMethodDef MyThing_methods[] = {
+static PyMethodDef MyThing_methods[] = {
     {"get_thing_one", (PyCFunction)MyThing_get_thing_one, METH_VARARGS,
      PyDoc_STR("get_thing_one() -> 1")},
     {"get_thing_two", (PyCFunction)MyThing_get_thing_two, METH_VARARGS},
@@ -66,7 +66,7 @@ static PyTypeObject MyThing_type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
-    "xxmodule.MyThing",             /*tp_name*/
+    "mything.MyThing",              /*tp_name*/
     sizeof(MyThingObject),          /*tp_basicsize*/
     0,                              /*tp_itemsize*/
     /* methods */
@@ -224,18 +224,22 @@ static IntConstantPair _constants[] = {
     {(char*)NULL, 0}
 };
 
+static PyMethodDef mything_functions[] = {
+    {NULL, NULL}
+};
+
 PyMODINIT_FUNC
 initmything(void) {
     PyObject *module, *dict;
-    module = Py_InitModule("mything", MyThing_methods);
+    module = Py_InitModule("mything", mything_functions);
     dict = PyModule_GetDict(module);
 
     /* Due to cross platform compiler issues the slots must be filled
      * here. It's required for portability to Windows without requiring
      * C++. */
-    Null_type.tp_base = &PyBaseObject_type;
+    Null_type.tp_base = &PyBaseObject_Type;
     Null_type.tp_new = PyType_GenericNew;
-    Str_type.tp_base = &PyUnicode_type;
+    Str_type.tp_base = &PyUnicode_Type;
 
     /* Finalize the type object including setting type of the new type
      * object; doing it here is required for portability, too. */
