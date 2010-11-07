@@ -11,6 +11,15 @@ static PyTypeObject MyThing_type;
 
 #define MyThingObject_Check(v)      (Py_TYPE(v) == &MyThing_type)
 
+static MyThingObject * newMyThingObject(PyObject *arg) {
+    MyThingObject *self;
+    self = PyObject_New(MyThingObject, &MyThing_type);
+    if (self == NULL)
+        return NULL;
+    self->x_attr = NULL;
+    return self;
+}
+
 /* MyThing methods */
 static void MyThing_dealloc(MyThingObject *self) {
     Py_XDECREF(self->x_attr);
@@ -211,6 +220,17 @@ static PyTypeObject Null_type = {
 
 /* ---------- */
 
+static PyObject * mything_MyThing(PyObject *self, PyObject *args) {
+    MyThingObject *rv;
+
+    if (!PyArg_ParseTuple(args, ":new"))
+        return NULL;
+    rv = newMyThingObject(args);
+    if (rv == NULL)
+        return NULL;
+    return (PyObject *)rv;
+}
+
 struct _IntConstantPair {
     char *constant_name;
     int constant_value;
@@ -225,6 +245,8 @@ static IntConstantPair _constants[] = {
 };
 
 static PyMethodDef mything_functions[] = {
+    {"MyThing", mything_MyThing, METH_VARARGS,
+        PyDoc_STR("MyThing() -> new Xx object")},
     {NULL, NULL}
 };
 
