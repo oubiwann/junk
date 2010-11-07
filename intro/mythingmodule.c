@@ -22,15 +22,15 @@ static PyObject * MyThing_get_thing_one(MyThingObject *self, PyObject *args) {
     return Py_BuildValue("i", result);
 }
 
-//PyObject * MyThing_get_thing_two(PyObject *self) {
-//    int result = get_thing_two();
-//    return Py_BuildValue("i", result);
-//}
+PyObject * MyThing_get_thing_two(PyObject *self) {
+    int result = get_thing_two();
+    return Py_BuildValue("i", result);
+}
 
 PyMethodDef MyThing_methods[] = {
     {"get_thing_one", (PyCFunction)MyThing_get_thing_one, METH_VARARGS,
      PyDoc_STR("get_thing_one() -> 1")},
-    //{"get_thing_two", (PyCFunction)MyThing_get_thing_two, METH_VARARGS},
+    {"get_thing_two", (PyCFunction)MyThing_get_thing_two, METH_VARARGS},
     {NULL, NULL},
 };
 
