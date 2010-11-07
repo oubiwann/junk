@@ -7,5 +7,11 @@ run-mything: mything
 extension:
 	python setup.py build
 
+run-extension: extension
+	python example.py
+
+test-interpreter:
+	cd build/lib.linux-i686-2.6 && python -m mything.so -i
+
 clean:
 	rm -rf build
