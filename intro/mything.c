@@ -2,17 +2,17 @@
 #include "mything.h"
 
 
-int get_thing_one()
+int get_thing_one(void)
 {
     return THING_ONE;
 }
 
-int get_thing_two()
+int get_thing_two(void)
 {
     return THING_TWO;
 }
 
-int main()
+int main(void)
 {
     int thing1;
     int thing2;
