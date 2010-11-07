@@ -7,9 +7,9 @@ typedef struct {
     PyObject            *x_attr;        /* Attributes dictionary */
 } MyThingObject;
 
-static PyTypeObject MyThing_Type;
+static PyTypeObject MyThing_type;
 
-#define MyThingObject_Check(v)      (Py_TYPE(v) == &MyThing_Type)
+#define MyThingObject_Check(v)      (Py_TYPE(v) == &MyThing_type)
 
 /* MyThing methods */
 static void MyThing_dealloc(MyThingObject *self) {
@@ -62,7 +62,7 @@ static int MyThing_setattr(MyThingObject *self, char *name, PyObject *v) {
         return PyDict_SetItemString(self->x_attr, name, v);
 }
 
-static PyTypeObject MyThing_Type = {
+static PyTypeObject MyThing_type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -109,7 +109,7 @@ static PyTypeObject MyThing_Type = {
 };
 /* --------------------------------------------------------------------- */
 
-static PyTypeObject Str_Type = {
+static PyTypeObject Str_type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -162,7 +162,7 @@ static PyObject * null_richcompare(PyObject *self, PyObject *other, int op) {
     return Py_NotImplemented;
 }
 
-static PyTypeObject Null_Type = {
+static PyTypeObject Null_type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -233,13 +233,13 @@ initmything(void) {
     /* Due to cross platform compiler issues the slots must be filled
      * here. It's required for portability to Windows without requiring
      * C++. */
-    Null_Type.tp_base = &PyBaseObject_Type;
-    Null_Type.tp_new = PyType_GenericNew;
-    Str_Type.tp_base = &PyUnicode_Type;
+    Null_type.tp_base = &PyBaseObject_type;
+    Null_type.tp_new = PyType_GenericNew;
+    Str_type.tp_base = &PyUnicode_type;
 
     /* Finalize the type object including setting type of the new type
      * object; doing it here is required for portability, too. */
-    if (PyType_Ready(&MyThing_Type) < 0)
+    if (PyType_Ready(&MyThing_type) < 0)
         return;
 
     /* Set integer constants */
