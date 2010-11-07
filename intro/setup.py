@@ -1,3 +1,6 @@
+"""
+This file is needed to build the Python C extension as an .so file.
+"""
 from distutils.core import setup, Extension
 
 

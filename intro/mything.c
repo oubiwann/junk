@@ -1,3 +1,7 @@
+/* This file implements a very simple API for demonstration purposes in writing
+ * C extensions for Python.
+ */
+
 #include<stdio.h>
 #include "mything.h"
 

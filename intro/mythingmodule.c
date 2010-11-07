@@ -1,3 +1,11 @@
+/* This file shows how to use the mything.c and mything.h demonstration files
+ * to build a Python C extension that allows one to accomplish the same tasks
+ * in a Python example as in the original C file.
+ *
+ * Building this extension results in a .so module being build. The example.py
+ * file shows how to use the .so module to do what the original C file does.
+ */
+
 #include<Python.h>
 #include "mything.h"
 

@@ -1,3 +1,7 @@
+/* This file defines some constants and prototypes for the demonstration C
+ * code.
+ */
+
 #ifndef MYTHING_HEADER
 #define MYTHING_HEADER
 

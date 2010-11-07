@@ -1,3 +1,8 @@
+"""
+This file demonstrates the usage for the final working form of the Python C
+Extension, using an object-oriented approach to provide the same functionality
+as the original C form.
+"""
 import sys
 sys.path.append("build/lib.linux-i686-2.6")
 import mything
