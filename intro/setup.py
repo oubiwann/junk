@@ -1,6 +1,10 @@
 from distutils.core import setup, Extension
- 
-module = Extension('mything', sources = ['mythingmodule.c'])
+
+
+module = Extension(
+    'mything',
+    include_dirs = ['./'],
+    sources = ['mythingmodule.c'])
  
 setup (name = 'PackageName',
         version = '1.0',
