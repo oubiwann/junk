@@ -37,12 +37,12 @@ static void MyThing_dealloc(MyThingObject *self) {
 
 static PyObject * MyThing_get_thing_one(MyThingObject *self) {
     int result = get_thing_one();
-    return Py_BuildValue("i", result);
+    return PyInt_FromLong(result);
 }
 
 static PyObject * MyThing_get_thing_two(MyThingObject *self) {
     int result = get_thing_two();
-    return Py_BuildValue("i", result);
+    return PyInt_FromLong(result);
 }
 
 static int MyThing_setattr(MyThingObject *self, char *name, PyObject *v) {
