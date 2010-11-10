@@ -30,22 +30,30 @@ static MyThingObject * newMyThingObject(PyObject *arg) {
 }
 
 /* MyThing methods */
-static void MyThing_dealloc(MyThingObject *self) {
+static void
+MyThing_dealloc(MyThingObject *self)
+{
     Py_CLEAR(self->x_attr);
     PyObject_Del(self);
 }
 
-static PyObject * MyThing_get_thing_one(MyThingObject *self) {
+static PyObject *
+MyThing_get_thing_one(MyThingObject *self)
+{
     int result = get_thing_one();
     return PyInt_FromLong(result);
 }
 
-static PyObject * MyThing_get_thing_two(MyThingObject *self) {
+static PyObject *
+MyThing_get_thing_two(MyThingObject *self)
+{
     int result = get_thing_two();
     return PyInt_FromLong(result);
 }
 
-static int MyThing_setattr(MyThingObject *self, char *name, PyObject *v) {
+static int
+MyThing_setattr(MyThingObject *self, char *name, PyObject *v)
+{
     if (self->x_attr == NULL) {
         self->x_attr = PyDict_New();
         if (self->x_attr == NULL)
@@ -58,8 +66,9 @@ static int MyThing_setattr(MyThingObject *self, char *name, PyObject *v) {
                 "delete non-existing MyThing attribute");
         return rv;
     }
-    else
+    else {
         return PyDict_SetItemString(self->x_attr, name, v);
+    }
 }
 
 static PyMethodDef MyThing_methods[] = {
@@ -69,7 +78,9 @@ static PyMethodDef MyThing_methods[] = {
     {NULL, NULL},
 };
 
-static PyObject * MyThing_getattr(MyThingObject *self, char *name) {
+static PyObject *
+MyThing_getattr(MyThingObject *self, char *name)
+{
     if (self->x_attr != NULL) {
         PyObject *v = PyDict_GetItemString(self->x_attr, name);
         if (v != NULL) {
@@ -132,7 +143,9 @@ static PyTypeObject MyThing_type = {
 /* --------------------------------------------------------------------- */
 
 /* Set up the module-level class */
-static PyObject * mything_MyThing(PyObject *self, PyObject *args) {
+static PyObject *
+mything_MyThing(PyObject *self, PyObject *args)
+{
     MyThingObject *rv;
 
     if (!PyArg_ParseTuple(args, ":new"))
@@ -167,7 +180,8 @@ static IntConstantPair _constants[] = {
 
 /* Set up the module initialization. */
 PyMODINIT_FUNC
-initmything(void) {
+initmything(void)
+{
     PyObject *module, *dict;
     module = Py_InitModule("mything", mything_functions);
     dict = PyModule_GetDict(module);
