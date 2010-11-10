@@ -37,5 +37,5 @@ include(${QT_USE_FILE})
 
 enable_testing()
 
-add_subdirectory(foo)
+add_subdirectory(mything)
 add_subdirectory(tests)
