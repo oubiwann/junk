@@ -31,7 +31,7 @@ static MyThingObject * newMyThingObject(PyObject *arg) {
 
 /* MyThing methods */
 static void MyThing_dealloc(MyThingObject *self) {
-    Py_XDECREF(self->x_attr);
+    Py_CLEAR(self->x_attr);
     PyObject_Del(self);
 }
 
