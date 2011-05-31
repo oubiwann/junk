@@ -3,9 +3,11 @@ import os
 from pyopenerp import const, exceptions
 
 
-def write_default_config():
+def write_default_config(dest_dir=""):
     """
     Create a default config file.
+
+    This function's parameters are used only for testing purposes.
     """
     src_file = os.path.abspath(const.CONFIG_TEMPLATE)
     if not os.path.isfile(src_file):
@@ -14,7 +16,7 @@ def write_default_config():
     src = open(src_file)
     data = src.read()
     src.close()
-    basedir = os.path.expanduser(const.CONFIG_DIR)
+    basedir = os.path.expanduser(dest_dir or const.CONFIG_DIR)
     if not os.path.exists(basedir):
         os.makedirs(basedir)
     dest_file = os.path.join(basedir, const.CONFIG_FILE)
@@ -23,14 +25,16 @@ def write_default_config():
     dest.close()
 
 
-def read_config():
+def read_config(default_config="", dest_dir=""):
     """
     Read the config file; if it's not there, create a default one and then
     re-attempt a read.
+
+    This function's parameters are used only for testing purposes.
     """
-    config_file = os.path.expanduser(const.DEFAULT_CONFIG)
+    config_file = os.path.expanduser(default_config or const.DEFAULT_CONFIG)
     if not os.path.isfile(config_file):
-        write_default_config()
+        write_default_config(dest_dir)
     config = open(config_file)
     data = config.read()
     config.close()
