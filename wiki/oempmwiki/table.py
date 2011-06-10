@@ -74,7 +74,7 @@ class WikiTable(object):
     def write(self, writer=None):
         if writer:
             self.writer = writer
-        self.writer.write(str(self))
+        self.writer.write(self.render())
 
  
 class ProjectStatusTable(WikiTable):
