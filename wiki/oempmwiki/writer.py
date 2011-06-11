@@ -39,6 +39,15 @@ class WikiWriter(object):
         form.submit(name="continue")
         print "Logged into wiki."
 
+
+    def checksum(self, data):
+        # XXX check to see if we need to write!
+        # XXX hrm... but since we need to go through the trouble of logging in
+        # first, just to see if anything's changed, it might make more sense to
+        # track the data obtained from the source... see if it has changed
+        # since the last "get"...
+        pass
+
     def write(self, data):
         print "Editing wiki page..."
         self.browser.getLink("Edit").click()

@@ -63,11 +63,12 @@ class ProjectStatusScript(WikiScript):
     def run(self):
         data_key = "0ArIWq6t1tnKldGtGRkxGRzVuczBJcW83b3VlRlYyUGc"
         options = self.get_options()
+        print "Getting data from Google..."
         reader = util.get_google_csv_reader(data_key)
         wiki_writer = writer.WikiWriter(
             options.url, options.username, options.password)
         data = [x for x in reader]
-        wiki_table = table.WikiTable(
+        wiki_table = table.ProjectStatusTable(
             data, has_headers=True, has_subheaders=True,
             writer=wiki_writer)
         wiki_table.write()

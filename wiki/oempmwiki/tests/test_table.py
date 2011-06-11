@@ -13,7 +13,7 @@ class BaseTestCase(unittest.TestCase):
             # subheader
             ['', '', 'Name', 'Date'],
             ['Flex', 'Some concerns', 'MA3', '7/1/2011'],
-            ['Dell', 'Going Swimingly', 'GM', '6/25/2011'],
+            ['Dell', 'Going Swimmingly', 'GM', '6/25/2011'],
             ['Bohica', "We're in trouble", 'Z22', '5/10/2011'],
             ]
 
@@ -66,7 +66,7 @@ class WikiTableTestCase(BaseTestCase):
     def test_render(self):
         wiki_table = table.WikiTable(self.test_data[2:])
         expected = (u"||Flex||Some concerns||MA3||7/1/2011||\n"
-                     "||Dell||Going Swimingly||GM||6/25/2011||\n"
+                     "||Dell||Going Swimmingly||GM||6/25/2011||\n"
                      "||Bohica||We're in trouble||Z22||5/10/2011||")
         self.assertEqual(wiki_table.render(), expected)
 
@@ -75,7 +75,7 @@ class WikiTableTestCase(BaseTestCase):
         wiki_table = table.WikiTable(test_data, has_headers=True)
         expected = (u"||Project||Staus||Next Milestone||\n"
                      "||Flex||Some concerns||MA3||7/1/2011||\n"
-                     "||Dell||Going Swimingly||GM||6/25/2011||\n"
+                     "||Dell||Going Swimmingly||GM||6/25/2011||\n"
                      "||Bohica||We're in trouble||Z22||5/10/2011||")
         self.assertEqual(wiki_table.render(), expected)
 
@@ -85,12 +85,20 @@ class WikiTableTestCase(BaseTestCase):
         expected = (u"||Project||Staus||Next Milestone||\n"
                      "||||||Name||Date||\n"
                      "||Flex||Some concerns||MA3||7/1/2011||\n"
-                     "||Dell||Going Swimingly||GM||6/25/2011||\n"
+                     "||Dell||Going Swimmingly||GM||6/25/2011||\n"
                      "||Bohica||We're in trouble||Z22||5/10/2011||")
         self.assertEqual(wiki_table.render(), expected)
 
-    def test_write(self):
-        pass
 
-
-
+class ProjectStatusTableTestCase(BaseTestCase):
+    """
+    """
+    def test_render_with_subheaders(self):
+        wiki_table = table.ProjectStatusTable(
+            self.test_data, has_headers=True, has_subheaders=True)
+        expected = (u"||Project||Staus||Next Milestone||\n"
+                     "||||||Name||Date||\n"
+                     "||Flex||<#FFFF66> Some concerns||MA3||7/1/2011||\n"
+                     "||Dell||<#66FFFF> Going Swimmingly||GM||6/25/2011||\n"
+                     "||Bohica||<#FF6666> We're in trouble||Z22||5/10/2011||")
+        self.assertEqual(wiki_table.render(), expected)

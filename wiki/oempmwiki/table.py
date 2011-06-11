@@ -1,3 +1,6 @@
+from oempmwiki import util
+
+
 class WikiRawLine(object):
     """ 
     An object that simply holds a raw wiki line for later use.
@@ -29,29 +32,20 @@ class WikiRow(WikiRawLine):
         return self.join()
 
 
-class ProjectStatusRow(WikiRow):
-    """
-    A WikiRow subclass that has project-specific customizations.
-    """
-    # XXX add rules for checking/normalizing content
-    # XXX add rules for coloring cells based on content
-
-
 class WikiTable(object):
     """
     A convenience object for creating general moin moin tables.
     """
+    row_class = WikiRow
+
     def __init__(self, data, has_headers=False, has_subheaders=False, 
-                 row_class=None, writer=None):
+                 writer=None):
         self.headers = None
         self.subheaders = None
         self._process_headers(data, has_headers, has_subheaders)
         self.raw_rows = data
         self.rows = []
         self.writer = writer
-        if not row_class:
-            row_class = ProjectStatusRow
-        self.row_class = row_class
         self._compile()
 
     def _process_headers(self, data, has_headers, has_subheaders):
@@ -76,10 +70,27 @@ class WikiTable(object):
             self.writer = writer
         self.writer.write(self.render())
 
- 
+
+class ProjectStatusRow(WikiRow):
+    """
+    A WikiRow subclass that has project-specific customizations.
+    """
+    def __init__(self, cells):
+        super(ProjectStatusRow, self).__init__(cells)
+        cells = []
+        for cell in self.cells:
+            # normalize the casing of the cell data
+            if util.get_status(cell):
+                cell = util.color_cell(cell)
+            cells.append(cell)
+            # add rules for coloring cells based on content
+        self.cells = cells 
+
+
 class ProjectStatusTable(WikiTable):
     """
     A WikiTable subclass that has project-specific customizations.
     """
+    row_class = ProjectStatusRow
     # XXX add support for custom header and subheader colors
 
