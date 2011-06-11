@@ -50,9 +50,9 @@ class WikiTable(object):
 
     def _process_headers(self, data, has_headers, has_subheaders):
         if has_headers:
-            self.headers = data.pop(0)
+            self.headers = ["'''%s'''" % x for x in data.pop(0)]
             if has_subheaders:
-                self.subheaders = data.pop(0)
+                self.subheaders = ["''%s''" % x for x in data.pop(0)]
 
     def _compile(self):
         if self.headers:

@@ -11,22 +11,22 @@ class ColorCellTestCase(unittest.TestCase):
         self.assertEqual(util.get_status("we're in trouble"), const.ALERT)
 
     def test_get_name_color(self):
-        self.assertEqual(util.get_name_color("Going Swimmingly"), "#66FFFF")
-        self.assertEqual(util.get_name_color("some concerns"), "#FFFF66")
-        self.assertEqual(util.get_name_color("we're IN trouble"), "#FF6666")
+        self.assertEqual(util.get_name_color("Going Swimmingly"), "#CCFFCC")
+        self.assertEqual(util.get_name_color("some concerns"), "#FFFFCC")
+        self.assertEqual(util.get_name_color("we're IN trouble"), "#FFCCCC")
 
     def test_get_status_color(self):
-        self.assertEqual(util.get_status_color(const.OK), "#66FFFF")
-        self.assertEqual(util.get_status_color(const.WARN), "#FFFF66")
-        self.assertEqual(util.get_status_color(const.ALERT), "#FF6666")
+        self.assertEqual(util.get_status_color(const.OK), "#CCFFCC")
+        self.assertEqual(util.get_status_color(const.WARN), "#FFFFCC")
+        self.assertEqual(util.get_status_color(const.ALERT), "#FFCCCC")
 
     def test_color_cell(self):
         self.assertEqual(
             util.color_cell("going swimmingly"),
-            "<#66FFFF> going swimmingly")
+            "<#CCFFCC> going swimmingly")
         self.assertEqual(
             util.color_cell("some concerns"),
-            "<#FFFF66> some concerns")
+            "<#FFFFCC> some concerns")
         self.assertEqual(
             util.color_cell("we're in trouble"),
-            "<#FF6666> we're in trouble")
+            "<#FFCCCC> we're in trouble")

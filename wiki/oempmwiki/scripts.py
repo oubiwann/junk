@@ -69,7 +69,6 @@ class ProjectStatusScript(WikiScript):
             options.url, options.username, options.password)
         data = [x for x in reader]
         wiki_table = table.ProjectStatusTable(
-            data, has_headers=True, has_subheaders=True,
-            writer=wiki_writer)
+            data, has_headers=True, writer=wiki_writer)
         wiki_table.write()
 
