@@ -1,0 +1,23 @@
+To get started with these scripts, you will need to download the latest code
+and then bootstrap some basic configuration:
+    $ bzr branch lp:~oubiwann/+junk/pm-scripts
+    $ cd pm-scripts/wiki
+    $ ./bin/<script-name> --bootstrap
+
+When running any of the scripts with the --bootstrap (or -b) option, a new
+config file will be generated for you (old ones are backed up) and saved to
+your ~/.oempmwiki directory. You will be queried to input Google and wiki
+sign-in information.  All of this will be written to the [DEFAULT] section of
+your config INI file.
+
+You can execute scripts against different wiki and Google data by adding new
+sections in your INI file.
+
+Once you are set up with a config INI file, you can execute your script with
+the following:
+    $ ./bin/<script name> -c <section name>
+For instance:
+    $ ./bin/update_project_states -c DEFAULT
+or
+    $ ./bin/update_project_states -c Testing
+

@@ -59,15 +59,8 @@ class WikiScript(Script):
         config_option = parser.get_option("--config")
         config_option.help += " (e.g., the values for logging into the wiki)"
         parser.add_option(
-            "-U", "--url", dest="url", action="store",
+            "-U", "--wiki-url", dest="wiki_url", action="store",
             help="the wiki URL for the page you will be working with")
-        parser.add_option(
-            "-u", "--username", dest="username", action="store",
-            help=("the username (or email address) you use to log in to "
-                  "the wiki"))
-        parser.add_option(
-            "-p", "--password", dest="password", action="store",
-            help="the password for your username")
         return parser
 
     def get_options(self):
@@ -113,8 +106,9 @@ class DemoProjectStatusScript(GoogleWikiScript):
         options = self.get_options()
         print "Getting data from Google..."
         reader = util.get_google_csv_reader(data_key)
+        wiki_url = options.wiki_url or self.config.wiki_url
         wiki_writer = writer.WikiWriter(
-            options.url, options.username, options.password)
+            wiki_url, self.config.wiki_username, self.config.wiki_password)
         data = [x for x in reader]
         wiki_table = table.ProjectStatusTable(
             data, has_headers=True, writer=wiki_writer)
@@ -131,9 +125,9 @@ class ProjectStatusScript(GoogleWikiScript):
         stream = self.client.get_data_stream()
         reader = unicodecsv.UnicodeReader(stream)
         print "Done."
+        wiki_url = options.wiki_url or self.config.wiki_url
         wiki_writer = writer.WikiWriter(
-            self.config.wiki_url, self.config.wiki_username, 
-            self.config.wiki_password)
+            wiki_url, self.config.wiki_username, self.config.wiki_password)
         data = [x for x in reader]
         wiki_table = table.ProjectStatusTable(
             data, has_headers=True, writer=wiki_writer)
