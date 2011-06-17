@@ -6,7 +6,7 @@ clean:
 	rm -rf MSG.backup _trial_temp/ build/
 
 check:
-	trial oerppy
+	trial oempmwiki
 
 commit: check
 	bzr commit --show-diff

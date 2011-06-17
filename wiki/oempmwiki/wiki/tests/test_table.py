@@ -1,6 +1,6 @@
 import unittest
 
-from oempmwiki import table
+from oempmwiki.wiki import table
 
 
 class BaseTestCase(unittest.TestCase):
