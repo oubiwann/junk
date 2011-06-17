@@ -49,6 +49,8 @@ class WikiTable(object):
         self._compile()
 
     def _process_headers(self, data, has_headers, has_subheaders):
+        if not data:
+            return
         if has_headers:
             self.headers = ["'''%s'''" % x for x in data.pop(0)]
             if has_subheaders:

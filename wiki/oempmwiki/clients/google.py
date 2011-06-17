@@ -1,3 +1,5 @@
+import io
+
 from zope.testbrowser.browser import Browser
 
 from oempmwiki import const
@@ -39,6 +41,10 @@ class Client(object):
             self.connect()
         if self.is_connected():
             return self.browser.contents
+
+    def get_data_stream(self):
+        data = self.get_data()
+        return io.BytesIO(data)
 
     def connect(self):
         # check to see if we've already got the page open

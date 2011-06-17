@@ -5,8 +5,8 @@ data_query = "hl=en_US&hl=en_US&single=true&&output=csv"
 data_url = "https://%s%s?%s" % (data_host, data_path, data_query)
 TAB_TEMPLATE = "&gid=%s"
 DATA_URL_TEMPLATE = data_url + "&key=%s"
-AGENT_STRING = ("Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.3) "
-                "Gecko/20100404 Ubuntu/10.04 (lucid) Firefox/3.6.3")
+AGENT_STRING = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.1 "
+                "(KHTML, like Gecko) Chrome/13.0.782.20 Safari/535.1")
 OK = 1
 WARN = 2
 ALERT = 3

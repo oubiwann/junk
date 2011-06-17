@@ -1,9 +1,10 @@
-import csv
 from optparse import OptionParser
 import StringIO
 import sys
 
-from oempmwiki import config, google, table, util, writer
+from oempmwiki import config, unicodecsv, util
+from oempmwiki.clients import google
+from oempmwiki.wiki import table, writer
 
 
 class Script(object):
@@ -127,10 +128,9 @@ class ProjectStatusScript(GoogleWikiScript):
     """
     def run(self):
         print "Getting data from Google..."
-        data = self.client.get_data()
-        file_object = StringIO.StringIO()
-        file_object.write(data)
-        reader = csv.reader(file_object)
+        stream = self.client.get_data_stream()
+        reader = unicodecsv.UnicodeReader(stream)
+        print "Done."
         wiki_writer = writer.WikiWriter(
             self.config.wiki_url, self.config.wiki_username, 
             self.config.wiki_password)
