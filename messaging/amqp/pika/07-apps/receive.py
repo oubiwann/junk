@@ -2,21 +2,20 @@
 import pika
 import sys
 
+from common import *
+
 
 exchange_name = "app_data"
-connection = pika.BlockingConnection(pika.ConnectionParameters(
-    host='localhost'))
+connection = pika.BlockingConnection(params)
 channel = connection.channel()
 channel.exchange_declare(exchange=exchange_name, type='topic')
 result = channel.queue_declare(exclusive=True)
 queue_name = result.method.queue
 
 
-binding_keys = sys.argv[1:]
-if not binding_keys:
-    print >> sys.stderr, "Usage: %s [binding_key]..." % (sys.argv[0],)
-    sys.exit(1)
-for binding_key in binding_keys:
+for binding_key in binding_keys.splitlines():
+    # remove whitespace
+    binding_key = binding_key.strip()
     channel.queue_bind(exchange=exchange_name, queue=queue_name,
                        routing_key=binding_key)
 
