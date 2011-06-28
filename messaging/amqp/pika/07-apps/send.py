@@ -16,7 +16,7 @@ channel.basic_publish(exchange=exchange_name, routing_key=routing_key,
                       body=message)
 
 
-print " [o] Sent %r:%r" % (routing_key, message)
+print " [ ] Sent %r:%r" % (routing_key, message)
 
 
 connection.close()

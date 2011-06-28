@@ -8,7 +8,7 @@ from common import *
 exchange_name = "app_data"
 connection = pika.BlockingConnection(params)
 channel = connection.channel()
-channel.exchange_declare(exchange=exchange_name, type='topic')
+channel.exchange_declare(exchange=exchange_name, type=exchange_type)
 result = channel.queue_declare(exclusive=True)
 queue_name = result.method.queue
 
