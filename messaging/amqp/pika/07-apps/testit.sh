@@ -2,13 +2,26 @@
 
 
 clear
+echo "RabbitMQ checks:"
+echo
+sudo rabbitmqctl list_vhosts
+sudo rabbitmqctl list_queues
+sudo rabbitmqctl list_exchanges
+sudo rabbitmqctl list_bindings
 echo "Starting up exchange ..."
 python receive.py & 
 PID=$!
-echo "Done."
+echo "...done."
 sleep 2;
 python send.py
-sleep 2;
+sudo rabbitmqctl list_bindings
+sleep 5;
 echo "Shutting down exchange ..."
 kill $PID
-echo "Done."
+echo "...done."
+echo
+echo "RabbitMQ checks:"
+sudo rabbitmqctl list_vhosts
+sudo rabbitmqctl list_queues
+sudo rabbitmqctl list_exchanges
+sudo rabbitmqctl list_bindings

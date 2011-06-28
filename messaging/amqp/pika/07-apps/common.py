@@ -12,7 +12,7 @@ routing_keys = [
     "chromium.*",
     "nautilus.*",
     ]
-exchange_name = "app_data"
+exchange_name = "app.data"
 exchange_type = "topic"
 params = pika.ConnectionParameters(host="localhost")
 json_account_settings = {
