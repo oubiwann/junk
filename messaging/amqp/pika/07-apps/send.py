@@ -5,7 +5,6 @@ import sys
 from common import *
 
 
-exchange_name = "app_data"
 connection = pika.BlockingConnection(params)
 channel = connection.channel()
 channel.exchange_declare(exchange=exchange_name, type=exchange_type)
