@@ -1,32 +1,46 @@
-#!/usr/bin/env python
 import sys
 
-import pika
+from pika.adapters import SelectConnection
+from pika.connection import ConnectionParameters
 
 from common import *
 
 
-connection = pika.BlockingConnection(params)
-channel = connection.channel()
-channel.exchange_declare(exchange=exchange_name, type=exchange_type)
-result = channel.queue_declare(exclusive=True)
-queue_name = result.method.queue
+class Receiver(Connector):
+    """
+    """
+    def on_channel_open(self, channel):
+        print "Channel opened."
+        self.channel = channel
+        self.channel.exchange_declare(
+            exchange=exchange_name, type=exchange_type)
+        for queue_name in queue_names:
+            self.channel.queue_declare(
+                queue=queue_name, durable=True, exclusive=True,
+                auto_delete=True, callback=self.on_queue_declared) 
+            for routing_key in routing_keys:
+                if routing_key.startswith(queue_name):
+                    self.channel.queue_bind(
+                        exchange=exchange_name, queue=queue_name,
+                        routing_key=routing_key)
+
+    def on_queue_declared(self, frame, *args, **kwargs):
+        print "Queue declared."
+        self.channel.basic_consume(
+            self.handle_delivery, queue=frame.method.queue)
+
+    def handle_delivery(self, channel, method_frame, header_frame, body):
+        print "[x] Data received on %s: %s" % (
+            method_frame.routing_key, body)
+        self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
 
-for routing_key in routing_keys:
-    channel.queue_bind(
-        exchange=exchange_name,
-        queue=queue_name,
-        routing_key=routing_key)
-
-
-print " [*] Waiting for application data ... "
-print "To exit press CTRL+C"
-
-
-def callback(ch, method, properties, body):
-    print " [x] Received in %r: %r" % (method.routing_key, body)
-
-
-channel.basic_consume(callback, queue=queue_name, no_ack=True)
-channel.start_consuming()
+if __name__ == '__main__':
+    host = (len(sys.argv) > 1) and sys.argv[1] or '127.0.0.1'
+    receiver = Receiver(host)
+    # Loop until CTRL-C
+    try:
+        # Start our blocking loop
+        receiver.start()
+    except KeyboardInterrupt:
+        receiver.shutdown()
