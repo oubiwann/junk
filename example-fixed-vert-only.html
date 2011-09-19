@@ -1,0 +1,364 @@
+<!DOCTYPE html public '-//w3c//dtd html 4.01//en' http://www.w3.org/tr/html4/strict.dtd'>
+<html>
+<head>
+    <title>YUI 3 Accordion Examples</title>
+    <meta http-equiv=content-type content="text/html; charset=utf-8">
+
+    <script src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
+    <style type="text/css">
+
+    /* example skin */
+
+    #controls
+    {
+        float: right;
+        width: 27em;
+    }
+
+    .vert-container
+    {
+        width: 300px;
+        float: left;
+    }
+
+    .horiz-container
+    {
+        margin-left: 20px;
+        float: left;
+    }
+
+    .accordion-test-vert
+    {
+        width: 150px;
+        border: 1px solid black;
+        padding: 2px;
+    }
+
+    .accordion-test-horiz
+    {
+        height: 108px;
+        border: 1px solid black;
+        padding: 2px;
+    }
+
+    .my-title-horiz,
+    .my-title-vert
+    {
+        color: #333333;
+        border: 2px solid #999999;
+        padding: 2px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .my-title-horiz
+    {
+        width: 25px;
+        height: 100px;
+    }
+
+    .my-section-horiz
+    {
+        width: 100px;
+        height: 108px;
+    }
+
+    .my-section-vert-constrained
+    {
+        height: 50px;
+    }
+
+    .yui3-accordion-title-focused
+    {
+        background-color: #EEE;
+    }
+
+    .yui3-js-enabled .yui3-widget-loading
+    {
+        display: none;
+    }
+    </style>
+</head>
+
+<body class="yui3-skin-sam">
+
+<script type="text/javascript">
+YUI({
+    gallery: 'gallery-2011.09.07-20-35'
+}).use(
+    'gallery-accordion-horiz-vert',
+    'anim-base',
+    'node-focusmanager',
+function(Y)
+{
+    if (!Y.Anim)
+    {
+        Y.one('#animate-insert').set('disabled', true);
+        Y.one('#animate-open').set('disabled', true);
+    }
+
+    function onTitleClicked(e, a)
+    {
+        var t = e.target;
+        var i = a.findSection(e.target);
+        if (i >= 0)
+        {
+            a.toggleSection(i);
+        }
+    }
+
+    function updateFocusMgr()
+    {
+        var a    = this;
+        var keys = a.get('horizontal') ?
+            { next: "down:39", previous: "down:37" } :
+            { next: "down:40", previous: "down:38" };
+
+        var node = a.get('contentBox');
+        node.unplug(Y.Plugin.NodeFocusManager);
+        node.plug(Y.Plugin.NodeFocusManager,
+        {
+            descendants: '.yui3-accordion-title a',
+            keys:        keys,
+            circular:    false,
+            focusClass:
+            {
+                className: a.getClassName('title', 'focused'),
+                fn: function (node)
+                {
+                    return node.get('parentNode');
+                }
+            }
+        });
+    }
+
+    // create accordions
+
+    var vjs = new Y.Accordion(
+    {
+        boundingBox:   '#accordion-test-vert-js',
+        animateRender: true,
+        titles:
+        [
+            '<div class="my-title-vert"><a href="javascript:void(0);">#1</a></div>',
+            '<div class="my-title-vert"><a href="javascript:void(0);">#2</a></div>',
+            '<div class="my-title-vert"><a href="javascript:void(0);">#3</a></div>'
+        ],
+        sections:
+        [
+            '<p>testing</p>',
+            '<p>testing testing</p>',
+            '<div class="my-section-vert-constrained"><p>testing</p><p>testing</p><p>testing</p></div>'
+        ]
+    });
+
+    vjs.after('render', function()
+    {
+        var box = this.get('contentBox');
+        box.all('.yui3-accordion-section').addClass('my-section-vert');
+
+        Y.on('click', onTitleClicked, '#accordion-test-vert-js .my-title-vert', null, vjs);
+    });
+
+    var accordions = [vjs];
+
+    Y.on('domready', function()
+    {
+        document.getElementById('allow-multiple').checked   = vjs.get('allowMultipleOpen');
+        document.getElementById('allow-all-closed').checked = vjs.get('allowAllClosed');
+        document.getElementById('animate-insert').checked   = vjs.get('animateInsertRemove');
+        document.getElementById('animate-open').checked     = vjs.get('animateOpenClose');
+
+        vjs.render();
+
+        Y.each(accordions, function(a)
+        {
+            updateFocusMgr.call(a);
+
+            a.on('insert', function()
+            {
+                Y.later(1, this, updateFocusMgr);
+            });
+            a.on('remove', updateFocusMgr);
+        });
+    });
+
+    // test parameters
+
+    Y.on('change', function(e)
+    {
+        Y.each(accordions, function(a)
+        {
+            a.set('allowMultipleOpen', e.target.get('checked'));
+        });
+    },
+    '#allow-multiple');
+
+    Y.on('change', function(e)
+    {
+        Y.each(accordions, function(a)
+        {
+            a.set('allowAllClosed', e.target.get('checked'));
+        });
+    },
+    '#allow-all-closed');
+
+    Y.on('change', function(e)
+    {
+        Y.each(accordions, function(a)
+        {
+            a.set('animateInsertRemove', e.target.get('checked'));
+        });
+    },
+    '#animate-insert');
+
+    Y.on('change', function(e)
+    {
+        Y.each(accordions, function(a)
+        {
+            a.set('animateOpenClose', e.target.get('checked'));
+        });
+    },
+    '#animate-open');
+
+    // test inserting sections
+
+    var count = 6;
+
+    function addSectionHandlers(
+        /* object */    a,
+        /* object */    s)
+    {
+        Y.on('click', onTitleClicked, s.title, null, a);
+
+        Y.on('click', function(type, a, el)
+        {
+            var i = a.findSection(el);
+            if (i >= 0)
+            {
+                a.removeSection(i);
+            }
+        },
+        s.content, null, a, s.content);
+    };
+
+    function insertVertSection(
+        /* accordion */ obj,
+        /* string */    c1,
+        /* string */    c2)
+    {
+        count++;
+
+        var s = obj.insertSection(1, '<div class="'+c1+'"><a href="javascript:void(0);">#'+count+'</a></div>',
+                                  '<p>inserted content #'+count+'<br>click to delete</p>');
+        s.content.addClass(c2);
+        addSectionHandlers(obj, s);
+    };
+
+    function insertHorizSection(
+        /* accordion */ obj,
+        /* string */    c1,
+        /* string */    c2)
+    {
+        count++;
+
+        var s = obj.insertSection(1, '<a href="javascript:void(0);">#'+count+'</a>',
+                                  '<p>inserted content #'+count+'<br>click to delete</p>');
+        s.title.addClass(c1);
+        s.content.addClass(c2);
+        addSectionHandlers(obj, s);
+    };
+
+    Y.on('click', function()
+    {
+        insertVertSection(vjs, 'my-title-vert', 'my-section-vert');
+        insertVertSection(vm, 'my-title-vert', 'my-section-vert');
+        insertHorizSection(hjs, 'my-title-horiz', 'my-section-horiz');
+        insertHorizSection(hm, 'my-title-horiz', 'my-section-horiz');
+    },
+    '#insert-section');
+
+    function appendVertSection(
+        /* accordion */ obj,
+        /* string */    c1,
+        /* string */    c2)
+    {
+        count++;
+
+        var s = obj.appendSection('<div class="'+c1+'"><a href="javascript:void(0);">#'+count+'</a></div>',
+                                  '<p>appended content #'+count+'<br>click to delete</p>');
+        s.content.addClass(c2);
+        addSectionHandlers(obj, s);
+    };
+
+    function appendHorizSection(
+        /* accordion */ obj,
+        /* string */    c1,
+        /* string */    c2)
+    {
+        count++;
+
+        var s = obj.appendSection('<a href="javascript:void(0);">#'+count+'</a>',
+                                  '<p>appended content #'+count+'<br>click to delete</p>');
+        s.title.addClass(c1);
+        s.content.addClass(c2);
+        addSectionHandlers(obj, s);
+    };
+
+    Y.on('click', function()
+    {
+        appendVertSection(vjs, 'my-title-vert', 'my-section-vert');
+        appendVertSection(vm, 'my-title-vert', 'my-section-vert');
+        appendHorizSection(hjs, 'my-title-horiz', 'my-section-horiz');
+        appendHorizSection(hm, 'my-title-horiz', 'my-section-horiz');
+    },
+    '#append-section');
+});
+</script>
+
+<h1><a href="http://yuilibrary.com/gallery/show/accordion-horiz-vert">YUI 3 Accordion</a> Examples</h1>
+
+<div id="controls">
+    <p>Controls</p>
+    <input type="checkbox" id="allow-multiple">
+    <label for="allow-multiple">Allow multiple open sections</label>
+
+    <br>
+    <input type="checkbox" id="allow-all-closed">
+    <label for="allow-all-closed">Allow all sections to be closed</label>
+    <br>
+    <input type="checkbox" id="animate-insert">
+    <label for="animate-insert">Animate insert/remove</label>
+    <br>
+    <input type="checkbox" id="animate-open">
+
+    <label for="animate-open">Animate open/close</label>
+    <br><br>
+    <input type="button" value="Insert a section" id="insert-section">
+    <input type="button" value="Append a section" id="append-section">
+    <br><br>
+    <p>Notes</p>
+    <ul>
+        <li><a href="/yui3-gallery/">Back to project list</a></li>
+
+        <li><a href="../yuidoc/module_gallery-accordion-horiz-vert.html">Click here</a> to see documentation.</li>
+        <li><a href="index.html">Click here</a> to see basic examples.</li>
+        <li><a href="fixed_size.html">Click here</a> to see fixed height/width examples.</li>
+        <li>FocusManager Node Plugin:<br>
+            Use the up/down arrow keys for vertical.<br>
+        </li>
+    </ul>
+</div>
+
+<div>
+    <div class="vert-container">
+        <h4>Vertical</h4>
+        <div id="accordion-test-vert-js" class="accordion-test-vert"></div>
+    </div>
+</div>
+
+<br clear="left"/>
+
+</body>
+</html>
