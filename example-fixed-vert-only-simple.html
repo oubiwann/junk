@@ -88,8 +88,6 @@ function(Y) {
         }
     }
 
-    // create accordions
-
     var vjs = new Y.Accordion( {
         boundingBox:   '#accordion-test-vert-js',
         animateRender: true,
@@ -117,7 +115,6 @@ function(Y) {
         Y.on('click', onTitleClicked, '#accordion-test-vert-js .my-title-vert', null, vjs);
     });
 
-    var accordions = [vjs];
     Y.on('domready', function() {
         vjs.render();
     });
