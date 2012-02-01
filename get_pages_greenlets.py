@@ -8,6 +8,7 @@ from gevent import monkey
 
 monkey.patch_all()
 
+from datetime import datetime
 import urllib2
 
 
@@ -23,34 +24,42 @@ urls = [
     "http://www.launchpad.com",
     "http://www.bitbucket.com",
     "http://www.twisted.com",
+    "http://www.gevent.org",
     "http://127.0.0.1",
     ]
 
 
 def get_page(url, content_offset=100):
+    start = datetime.now()
     try:
-        return (url, urllib2.urlopen(url).read(), content_offset)
+        data = urllib2.urlopen(url).read()
     except Exception, err:
-        return (url, err, None)
+        data = err
+    finish = datetime.now()
+    delta = finish - start
+    ellapsed = delta.seconds + delta.microseconds/1000000.0
+    return (url, data, content_offset, ellapsed)
 
 
-def print_success(data, offset):
+def print_success(data, offset, time):
+    print("    time: %s s" % time)
     print("    bytes: %s" % len(data))
     print("    content: %s" % data[:offset].replace("\n", "").strip())
 
 
-def print_error(err):
+def print_error(err, time):
+    print("    time: %s s" % time)
     print("    Error!")
     print("    %s: %s!" % (err.__class__.__name__, err.args[0]))
 
 
 def check_content(greenlet_exit):
-    url, result, offset = greenlet_exit.value
+    url, result, offset, time = greenlet_exit.value
     print("  Checking results for %s ..." % url)
     if isinstance(result, Exception):
-        print_error(result)
+        print_error(result, time)
     else:
-        print_success(result, offset)
+        print_success(result, offset, time)
 
 
 def create_greenlets():
