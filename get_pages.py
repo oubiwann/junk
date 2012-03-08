@@ -1,8 +1,5 @@
 #!/usr/bin/python
-# Copyright (c) 2009 Denis Bilenko. See gevent LICENSE for details.
-# Copyright (c) 2012 New Dream Network (DreamHost)
-# Downloaded from:
-#   https://bitbucket.org/denis/gevent/src/tip/examples/concurrent_download.py
+# Copyright (c) 2012 New Dream Network, LLC (DreamHost)
 """
 Spawn multiple "jobs" and wait for them to complete.
 """

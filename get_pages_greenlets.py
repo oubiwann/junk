@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright (c) 2012 New Dream Network (DreamHost)
+# Copyright (c) 2012 New Dream Network, LLC (DreamHost)
 """
 Use the Greenlet class to run multiple "jobs" and wait for them to complete.
 """
