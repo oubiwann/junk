@@ -2,7 +2,9 @@
 # Copyright (c) 2009 Denis Bilenko. See LICENSE for details.
 # Downloaded from:
 #   https://bitbucket.org/denis/gevent/src/tip/examples/concurrent_download.py
-"""Spawn multiple workers and wait for them to complete"""
+"""
+Spawn multiple workers and wait for them to complete.
+"""
 import gevent
 from gevent import monkey
 
