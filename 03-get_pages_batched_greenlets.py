@@ -5,8 +5,8 @@ Use the Greenlet class to run multiple "jobs" and wait for them to complete.
 """
 import gevent
 from gevent import monkey
-
 monkey.patch_all()
+from gevent.pool import Pool
 
 from datetime import datetime
 import urllib2
@@ -27,6 +27,9 @@ urls = [
     "http://www.gevent.org",
     "http://127.0.0.1",
     ]
+
+
+pool = Pool(2)
 
 
 def get_page(url, content_offset=100):
@@ -66,10 +69,10 @@ def create_greenlets():
     jobs = []
     for url in urls:
         print("  Creating and scheduling greenlet for %s ..." % url)
-        g = gevent.Greenlet(get_page, url, content_offset=20)
+        g = pool.spawn(get_page, url, content_offset=20)
         g.link_value(check_content)
         # now schedule it to run
-        g.start()
+        #g.start()
         print("  Done.")
         jobs.append(g)
     return jobs
