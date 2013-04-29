@@ -1,0 +1,9 @@
+This is a workspace for exploring dependency injection/inversion of control in
+Python, based entirely upon the presentation that Alex Martelli gave at Google
+in 2008:
+    http://www.aleax.it/yt_pydi.pdf
+
+Please note: 
+ * di = dependency inversion
+ * ioc = inversion of control
+ * dp = design pattern
