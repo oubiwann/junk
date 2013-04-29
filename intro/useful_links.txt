@@ -1,0 +1,17 @@
+C Programming:
+ * http://begincprogram.blogspot.com/2009/05/introduction-to-c-language-with.html
+ * http://en.wikipedia.org/wiki/Function_prototype
+ * http://en.wikipedia.org/wiki/Struct_(C_programming_language)
+
+Useful Python C Extension examples:
+ * http://svn.python.org/view/python/trunk/Modules/xxmodule.c?revision=81029&view=markup
+ * http://svn.python.org/view/python/trunk/Modules/_sqlite/module.c?revision=78688&view=markup
+ * http://svn.python.org/view/python/trunk/Modules/_elementtree.c?revision=79397&view=markup
+
+Useful C Extension docs:
+ * http://docs.python.org/extending/extending.html
+ * http://docs.python.org/extending/building.html
+ * http://starship.python.net/crew/arcege/extwriting/pyext.html
+ * http://wiki.cacr.caltech.edu/danse/index.php/Lots_more_details_on_writing_wrappers
+ * http://en.wikibooks.org/wiki/Python_Programming/Extending_with_C
+ * http://docs.python.org/c-api/index.html
