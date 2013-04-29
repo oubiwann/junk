@@ -1,0 +1,138 @@
+<!DOCTYPE html public '-//w3c//dtd html 4.01//en' http://www.w3.org/tr/html4/strict.dtd'>
+<html>
+<head>
+    <title>YUI 3 Accordion Examples</title>
+    <meta http-equiv=content-type content="text/html; charset=utf-8">
+
+    <script src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
+    <style type="text/css">
+
+    /* example skin */
+
+    #controls {
+        float: right;
+        width: 27em;
+    }
+
+    .vert-container {
+        width: 300px;
+        float: left;
+    }
+
+    .horiz-container {
+        margin-left: 20px;
+        float: left;
+    }
+
+    .accordion-test-vert {
+        width: 150px;
+        border: 1px solid black;
+        padding: 2px;
+    }
+
+    .accordion-test-horiz {
+        height: 108px;
+        border: 1px solid black;
+        padding: 2px;
+    }
+
+    .my-title-horiz, .my-title-vert {
+        background: #333333 url('./title-section-back.png');
+        padding: 2px;
+        margin: 2px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .my-title-horiz {
+        width: 25px;
+        height: 100px;
+    }
+
+    .my-section-horiz {
+        width: 100px;
+        height: 108px;
+    }
+
+    .my-section-vert-constrained {
+        height: 50px;
+    }
+
+    .yui3-accordion-title-focused {
+        background-color: #EEE;
+    }
+
+    .yui3-js-enabled .yui3-widget-loading {
+        display: none;
+    }
+    </style>
+</head>
+
+<body class="yui3-skin-sam">
+
+<script type="text/javascript">
+YUI({
+    gallery: 'gallery-2011.09.07-20-35'
+}).use(
+    'gallery-accordion-horiz-vert',
+    'anim-base', 'anim-easing',
+    'node-focusmanager',
+function(Y) {
+
+    function onTitleClicked(element, accordion) {
+        var t = element.target;
+        var i = accordion.findSection(element.target);
+        if (i >= 0) {
+            accordion.toggleSection(i);
+        }
+    }
+
+    var vjs = new Y.Accordion( {
+        boundingBox:   '#accordion-test-vert-js',
+        animateRender: true,
+        animateDuration: 0.5,
+        //animateEasing: Y.Anim.elasticBoth,
+        animateEasing: Y.Anim.bounceBoth,
+        //animateEasing: Y.Anim.easeBothStrong,
+        titles: [
+            '<div class="my-title-vert">Section 1 Title</div>',
+            '<div class="my-title-vert">Section 2 Title</div>',
+            '<div class="my-title-vert">Section 3 Title</div>',
+        ],
+        sections: [
+            '<p>testing</p>',
+            '<p>testing testing</p>',
+            '<div class="my-section-vert-constrained"><p>this has longer,</p><p>scrolling</p><p>content.</p><p>Much, </p><p>much,</p><p>much longer.</p></div>'
+        ],
+        allowAllClosed: true,
+        allowMultipleOpen: true
+    });
+
+    vjs.after('render', function() {
+        var box = this.get('contentBox');
+        box.all('.yui3-accordion-section').addClass('my-section-vert');
+        Y.on('click', onTitleClicked, '#accordion-test-vert-js .my-title-vert', null, vjs);
+    });
+
+    Y.on('domready', function() {
+        vjs.render();
+    });
+
+});
+
+</script>
+
+<h1><a href="http://yuilibrary.com/gallery/show/accordion-horiz-vert">YUI 3 Accordion</a> Examples</h1>
+
+<div>
+    <div class="vert-container">
+        <h4>Vertical</h4>
+        <div id="accordion-test-vert-js" class="accordion-test-vert"></div>
+    </div>
+</div>
+
+<br clear="left"/>
+
+</body>
+</html>
