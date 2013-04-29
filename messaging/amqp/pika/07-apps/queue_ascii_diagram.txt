@@ -1,0 +1,27 @@
+                                                +----------------+
+                                                | Queue          |                 __________
+                    evolution.mail.*  --------> |                |   ---------->  ( Consumer )
+                    evolution.contacts.*        | name=evolution |                 ----------
+                    evolution.calendar.*        +----------------+
+                              ^
+                              |
+                              |
+                              |
+                              |
+                        +------------+                      +--------------+
+     ___________        | Exchange   |                      | Queue        |               __________
+    ( Publisher ) --->  |            |---> chromium.* ----> |              |   -------->  ( Consumer )
+     -----------        | type=topic |                      | name=browser |               ----------
+                        +------------+                      +--------------+
+                              |
+                              |      
+                              |
+                              |
+                              |                 +-----------------+
+                              v                 | Queue           |                __________
+                          nautilus.*  --------> |                 |   --------->  ( Consumer )
+                                                | name=filesystem |                ----------
+                                                +-----------------+
+
+
+

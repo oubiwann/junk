@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0
+    Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"
+    xmlns:nevow="http://nevow.com/ns/nevow/0.1"
+    xmlns:genshi="http://genshi.edgewall.org/"
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+<body>
+
+    <style>
+        html, body { padding: 0; margin: 0; }
+        body { font-family: arial, "lucida console", sans-serif; font-size: 11px; background-color: #efe;}
+        div, ul { padding-left: 1em; margin: 0}
+        a { color: #aea; }
+        .top { background-color: #363; color: #fff; padding-top: 0.5em; padding-bottom: 0.5em; }
+    </style>
+
+    <div class="top">
+    <h1>Your Stuff</h1>
+    <p>You are <span nevow:render="username"/> and your stuff is here.</p>
+    <ul>
+    <li><a href="/">Home</a></li>
+    </ul>
+    </div>
+    <div>
+    <h2>Genshi Date</h2>
+        <span>Timestamp for now is ${date}</span>
+    </div>
+    <div>
+    <h2>Genshi Variable</h2>
+        <span>Your name is ${username}</span>
+    </div>
+    <div>
+    <h2>Genshi dict Variable</h2>
+      <span>${key.value}</span><br/>
+    </div>
+    <div>
+    <h2>Genshi :with</h2>
+      <span genshi:with="y=7; x=y**2; z=x+10">$x $y $z</span><br/>
+    </div>
+    <div genshi:if="doIt">
+    <h2>Genshi :if</h2>
+        doIt is True!
+    </div>
+    <div genshi:choose="">
+    <h2>Genshi :choose/:when</h2>
+        <span genshi:when="doIt == True">Yeah, we can do it!</span>
+        <span genshi:when="doIt == False">Aw shucks, we can't do it.</span>
+    </div>
+    <div>
+    <h2>Genshi :for</h2>
+    <ul>
+        <genshi:for each="item in items">
+        <li>item ${item}</li>
+        </genshi:for>
+    </ul>
+    </div>
+    <div>
+    <h2>Genshi :def</h2>
+      <p genshi:def="greeting(name)" class="greeting">
+        Hello, ${name}!
+      </p>
+      ${greeting('world')}
+      ${greeting('everyone else')}
+    </div>
+    <div>
+    <h2>Genshi :match</h2>
+      <span genshi:match="greeting">
+        Hello ${select('@name')}
+      </span>
+      <greeting name="Dude" />
+    </div>
+    <div>
+    <h2>Genshi :match path</h2>
+      <genshi:match path="secondgreeting">
+        <span>Hello again, ${select('@name')}</span>
+      </genshi:match>
+      <secondgreeting name="Dude" />
+    </div>
+    <div>
+    <h2>Genshi :attrs</h2>
+    <ul>
+        <style>
+        .even { background-color: #ccc; }
+        .odd { background-color: #999; }
+        </style>
+        <genshi:for each="item in altItems">
+        <li genshi:attrs="item[1]">item ${item[0]}</li>
+        </genshi:for>
+    </ul>
+    </div>
+    <div>
+    <h2>Genshi :content</h2>
+    <ul>
+      <li genshi:content="username">Hello</li>
+    </ul>
+    </div>
+    <div>
+    <ul>
+    <h2>Genshi :replace</h2>
+      <li genshi:replace="username">Hello</li>
+    </ul>
+    </div>
+    <div>
+    <h2>Genshi :strip</h2>
+      <div genshi:strip="True"><b>foo</b></div>
+    </div>
+    <div>
+    <h2>Genshi XInclude</h2>
+    <xi:include href="genshiinclude.xhtml"></xi:include>
+    </div>
+</body>
+</html>
