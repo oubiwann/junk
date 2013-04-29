@@ -1,0 +1,8 @@
+#!/usr/bin/python
+"""
+"""
+from oempmwiki import scripts
+
+
+script = scripts.ProjectStatusScript()
+script.run()

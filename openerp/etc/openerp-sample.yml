@@ -1,0 +1,24 @@
+servers:
+  - host: host1
+    url: http://somewhere.com/api
+    database: db1
+    username: alice
+    password: abc123
+    
+  - host: host2
+    url: http://rpc.host.domain/
+    database: db2
+    username: bob
+    password: alice&bobBFF!
+
+  - host: host3
+    url: https://secure-xmlrpc.host.domain/
+    database: db3
+    username: carol
+    password: love3angle
+    
+  - host: host4
+    url: https://jsonrpc.host.domain/
+    database: db4
+    username: dave
+    password: wherezeve?
